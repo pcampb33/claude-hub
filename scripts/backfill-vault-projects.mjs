@@ -15,14 +15,13 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseFrontmatter, deriveProject } from '../electron/vault-project.ts'
 import { listProjects } from '../electron/registry.ts'
+import { VAULT_PATH } from '../electron/vault-core.ts'
 
 // registry.ts reads process.env.APP_ROOT lazily inside its functions; this
 // script runs from its own directory, so point APP_ROOT at the app root (where
 // registry.json lives) before listProjects() is ever called.
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 process.env.APP_ROOT = path.join(__dirname, '..')
-
-const VAULT_PATH = 'C:\\projects\\claude-hub-vault'
 // index.md is the landing page, _inbox.md the review queue — neither is a note.
 const EXCLUDED = new Set(['index.md', '_inbox.md'])
 

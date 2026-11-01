@@ -18,8 +18,7 @@ import path from 'node:path'
 import { parseLinksFile } from '../electron/vault-linker-core.ts'
 import { neighborsOf, buildRelatedBlock } from '../electron/vault-related-core.ts'
 import { materializeRelatedBlocks, writeMocs } from '../electron/vault-linker-run.ts'
-
-const VAULT_PATH = 'C:\\projects\\claude-hub-vault'
+import { VAULT_PATH } from '../electron/vault-core.ts'
 const LINKS_PATH = path.join(VAULT_PATH, '_links.jsonl')
 // Same candidate set as materializeRelatedBlocks: top-level notes only —
 // index.md is the landing page, RUBRIC.md the curation rubric, _-prefixed

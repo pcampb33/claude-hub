@@ -13,7 +13,7 @@ const execFileAsync = promisify(execFile)
 
 // A session dirname is derived by replacing `:`, `\`, `/`, `_`, and spaces
 // with `-`, preserving case as-typed. (The plan's original rule missed the
-// underscore case — confirmed against the real `P_cam` -> `P-cam` mapping
+// underscore case — confirmed against the real `J_doe` -> `J-doe` mapping
 // in `~/.claude/projects/` while building this module; see the plan's
 // Architecture decisions section for the corrected rule.) The same project
 // opened from PowerShell vs Git Bash also produces different-case dirnames,

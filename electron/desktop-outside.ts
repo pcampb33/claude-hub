@@ -22,7 +22,10 @@ export function claudeHome(): string {
   return process.env.CLAUDE_HUB_CLAUDE_HOME ?? path.join(os.homedir(), '.claude')
 }
 
-export const claudeSessionsDir = () => path.join(claudeHome(), 'sessions')
+// CLAUDE_HUB_SESSIONS_DIR moves only the per-process records: a demo
+// screenshot points it at an empty folder so the machine's other running
+// sessions stay off the picture, while transcripts are still found.
+export const claudeSessionsDir = () => process.env.CLAUDE_HUB_SESSIONS_DIR ?? path.join(claudeHome(), 'sessions')
 export const claudeProjectsDir = () => path.join(claudeHome(), 'projects')
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

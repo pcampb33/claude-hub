@@ -8,8 +8,12 @@
 // `evidence` declares how invocation is detected. A feature with NO probe
 // grades `unknown`, never `unused` — the whole point of the instrument.
 import os from 'node:os'
+import { VAULT_PATH } from '../electron/vault-core.ts'
+import { SANDBOX_PATH } from '../electron/registry.ts'
 
 const HOME = os.homedir().replace(/\\/g, '/')
+const VAULT = VAULT_PATH.replace(/\\/g, '/')
+const SANDBOX = SANDBOX_PATH.replace(/\\/g, '/')
 
 export const FEATURES = [
   // ---- Views (src/nav.ts) -------------------------------------------------
@@ -23,8 +27,8 @@ export const FEATURES = [
     src: ['src/features/inbox'],
     channels: ['vault:getInbox', 'vault:resolveInbox', 'vault:quickCapture'],
     evidence: [
-      { type: 'artifact', label: 'vault _inbox.md', path: 'C:/projects/claude-hub-vault/_inbox.md' },
-      { type: 'dir-count', label: 'inbox backups (execute runs)', path: 'C:/projects/claude-hub-vault/_inbox-backups' },
+      { type: 'artifact', label: 'vault _inbox.md', path: `${VAULT}/_inbox.md` },
+      { type: 'dir-count', label: 'inbox backups (execute runs)', path: `${VAULT}/_inbox-backups` },
     ] },
   { id: 'view-sessions', kind: 'view', name: 'Sessions',
     claim: 'Every recent on-disk session with its live state; read transcripts and subagents, resume or delete idle ones.',
@@ -52,8 +56,8 @@ export const FEATURES = [
     src: ['src/features/knowledge'],
     channels: ['vault:graph', 'vault:read-note', 'vault:recomputeLinks', 'vault:recall-scorecard'],
     evidence: [
-      { type: 'dir-count', label: 'vault notes', path: 'C:/projects/claude-hub-vault', glob: '.md' },
-      { type: 'lines', label: 'link edges sidecar', path: 'C:/projects/claude-hub-vault/_links.jsonl' },
+      { type: 'dir-count', label: 'vault notes', path: `${VAULT}`, glob: '.md' },
+      { type: 'lines', label: 'link edges sidecar', path: `${VAULT}/_links.jsonl` },
     ] },
   { id: 'view-commands', kind: 'view', name: 'Commands',
     claim: 'Slash-command catalog; launch a session prefilled with one via a claude-cli:// deep link.',
@@ -90,7 +94,7 @@ export const FEATURES = [
     claim: 'Throwaway experiment workspaces; Draft Learnings and Queue-to-Inbox turn one into a vault candidate.',
     src: ['src/features/sandbox'],
     channels: ['sandbox:list-experiments', 'sandbox:create-experiment', 'sandbox:draft-learnings', 'sandbox:queue-to-inbox', 'sandbox:list-jobs'],
-    evidence: [{ type: 'dir-count', label: 'experiments on disk', firstParty: true, path: 'C:/projects/claude-hub-sandbox' }] },
+    evidence: [{ type: 'dir-count', label: 'experiments on disk', firstParty: true, path: `${SANDBOX}` }] },
   { id: 'view-rubric', kind: 'view', name: 'Rubric',
     claim: 'Edit the curation rubric that steers what the curate hook considers vault-worthy.',
     src: ['src/features/rubric-settings'], channels: ['rubric:get', 'rubric:save'], evidence: [] },
@@ -133,8 +137,8 @@ export const FEATURES = [
     claim: 'Renders _links.jsonl into each note as a Related block and regenerates MOCs/ entry pages.',
     src: ['scripts/materialize-links.mjs', 'electron/vault-related-core.ts', 'electron/vault-moc-core.ts'],
     evidence: [
-      { type: 'grep-count', label: 'notes carrying a Related block', firstParty: true, dir: 'C:/projects/claude-hub-vault', pattern: '## Related' },
-      { type: 'dir-count', label: 'MOC pages', firstParty: true, path: 'C:/projects/claude-hub-vault/MOCs' },
+      { type: 'grep-count', label: 'notes carrying a Related block', firstParty: true, dir: `${VAULT}`, pattern: '## Related' },
+      { type: 'dir-count', label: 'MOC pages', firstParty: true, path: `${VAULT}/MOCs` },
     ] },
   { id: 'auto-scorecard', kind: 'automation', name: 'Recall scorecard',
     claim: 'Parses vault-recall.log and scans transcripts for Reads of offered notes: attempts to offers to delivered to read.',

@@ -7,7 +7,9 @@ import type { RegistryEntry } from '../shared/ipc-types'
 function registryPath(): string {
   return path.join(process.env.APP_ROOT!, 'registry.json')
 }
-const SANDBOX_PATH = 'C:\\projects\\claude-hub-sandbox'
+// The sandbox projects folder; CLAUDE_HUB_SANDBOX overrides it, as
+// CLAUDE_HUB_VAULT does the vault (vault-core.ts).
+export const SANDBOX_PATH = process.env.CLAUDE_HUB_SANDBOX ?? 'C:\\projects\\claude-hub-sandbox'
 
 function ensureSandbox(): void {
   if (!fs.existsSync(SANDBOX_PATH)) {

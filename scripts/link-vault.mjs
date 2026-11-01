@@ -20,10 +20,10 @@ import { stripRelatedBlock } from '../electron/vault-related-core.ts'
 import { buildLinkPrompt, parseLinkOutput } from '../electron/vault-linker-core.ts'
 import { recomputeLinks } from '../electron/vault-linker-run.ts'
 import { callClaudeSync } from '../electron/call-claude-core.ts'
+import { VAULT_PATH } from '../electron/vault-core.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const VAULT_PATH = 'C:\\projects\\claude-hub-vault'
 const LINKS_PATH = path.join(VAULT_PATH, '_links.jsonl')
 // Same exclusions as vault-graph.ts: the index page and the curation queue are
 // not notes. (_links.jsonl is skipped for free — only *.md is read.)

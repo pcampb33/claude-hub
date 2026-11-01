@@ -57,8 +57,23 @@ const pick = (xs) => xs[Math.floor(rand() * xs.length)]
 
 const PROJECTS = [
   {
-    name: 'trailhead',
+    name: 'project 1',
     blurb: 'Next.js trip planner for multi-day hikes.',
+    files: {
+      'src/gpx.ts': `// Reads a GPX file's track into a flat list of points.
+export interface Point { lat: number; lon: number; ele?: number }
+
+export function readTrack(doc: Document): Point[] {
+  const seg = doc.querySelector('trk > trkseg')
+  if (!seg) return []
+  return Array.from(seg.querySelectorAll('trkpt')).map((pt) => ({
+    lat: Number(pt.getAttribute('lat')),
+    lon: Number(pt.getAttribute('lon')),
+    ele: pt.querySelector('ele') ? Number(pt.querySelector('ele')!.textContent) : undefined,
+  }))
+}
+`,
+    },
     prompts: [
       'add an elevation profile chart to the route page',
       'the GPX import drops waypoints after the first track segment — find out why',
@@ -69,8 +84,21 @@ const PROJECTS = [
     ],
   },
   {
-    name: 'ledgerline',
+    name: 'project 2',
     blurb: 'Python service that parses supplier invoices into structured line items.',
+    files: {
+      'invoice.py': `"""Totals for parsed invoices."""
+
+
+def line_total(qty, unit_price, vat_rate):
+    net = round(qty * unit_price, 2)
+    return round(net * (1 + vat_rate), 2)
+
+
+def invoice_total(lines):
+    return sum(line_total(l["qty"], l["unit_price"], l["vat_rate"]) for l in lines)
+`,
+    },
     prompts: [
       'the VAT total is off by a cent on multi-currency invoices',
       'add a CLI command to re-run extraction on a folder',
@@ -80,8 +108,20 @@ const PROJECTS = [
     ],
   },
   {
-    name: 'pixel-forge',
+    name: 'project 3',
     blurb: 'Rust CLI for batch image resizing and format conversion.',
+    files: {
+      'presets.toml': `# Named output presets for \`forge batch --preset <name>\`.
+[thumbnail]
+width = 320
+format = "webp"
+quality = 80
+
+[archive]
+format = "png"
+strip_metadata = false
+`,
+    },
     prompts: [
       'add AVIF output behind a feature flag',
       'resizing a 16-bit PNG panics — reproduce and fix',
@@ -100,6 +140,10 @@ for (const p of PROJECTS) {
   const dir = path.join(demo, 'projects', p.name)
   write(path.join(dir, 'README.md'), `# ${p.name}\n\n${p.blurb}\n`)
   write(path.join(dir, 'CLAUDE.md'), `# ${p.name}\n\n${p.blurb}\n\n## Verify\n\nRun the test suite before calling a change done.\n`)
+  for (const [file, text] of Object.entries(p.files)) write(path.join(dir, file), text)
+  // A real Claude Code session run here for a screenshot must not fire the
+  // machine's global hooks (curate would queue demo notes into the real vault).
+  write(path.join(dir, '.claude', 'settings.json'), JSON.stringify({ disableAllHooks: true }, null, 2) + '\n')
   git(dir, 'init', '-q')
   git(dir, '-c', 'user.name=demo', '-c', 'user.email=demo@example.com', 'add', '-A')
   git(dir, '-c', 'user.name=demo', '-c', 'user.email=demo@example.com', 'commit', '-q', '-m', 'Initial commit')
@@ -162,15 +206,15 @@ write(path.join(claudeDir, 'settings.json'), JSON.stringify({
 
 // ---- vault -----------------------------------------------------------------
 const NOTES = [
-  ['GPX files can hold several track segments — iterate trkseg, not just the first', 'trailhead', ['Fixture files should include the multi-part case']],
+  ['GPX files can hold several track segments — iterate trkseg, not just the first', 'project 1', ['Fixture files should include the multi-part case']],
   ['Fixture files should include the multi-part case', null, []],
-  ['Leaflet basemap swaps flicker unless the old layer is removed after the new one loads', 'trailhead', []],
-  ['Round money only at the invoice total, never per line', 'ledgerline', ['Use Decimal, not float, for currency']],
-  ['Use Decimal, not float, for currency', 'ledgerline', []],
-  ['pdfplumber re-parses the page for every crop — extract words once and filter', 'ledgerline', ['Profile before parallelizing']],
+  ['Leaflet basemap swaps flicker unless the old layer is removed after the new one loads', 'project 1', []],
+  ['Round money only at the invoice total, never per line', 'project 2', ['Use Decimal, not float, for currency']],
+  ['Use Decimal, not float, for currency', 'project 2', []],
+  ['pdfplumber re-parses the page for every crop — extract words once and filter', 'project 2', ['Profile before parallelizing']],
   ['Profile before parallelizing', null, ['Measure the regression before and after the fix']],
-  ['The image crate decodes 16-bit PNGs as Rgba16 — convert before resizing', 'pixel-forge', ['Fixture files should include the multi-part case']],
-  ['rayon par_iter over files saturates disk before CPU on spinning drives', 'pixel-forge', ['Profile before parallelizing']],
+  ['The image crate decodes 16-bit PNGs as Rgba16 — convert before resizing', 'project 3', ['Fixture files should include the multi-part case']],
+  ['rayon par_iter over files saturates disk before CPU on spinning drives', 'project 3', ['Profile before parallelizing']],
   ['Measure the regression before and after the fix', null, []],
   ['A test that never fails proves nothing — reintroduce the bug once', null, ['Measure the regression before and after the fix']],
 ]
@@ -184,13 +228,13 @@ const stamp = (d) => new Date(now - d * DAY).toISOString()
 write(path.join(vault, '_inbox.md'), `# Inbox\n
 ## AVIF encoding is 10x slower than WebP at default speed — set speed 6 for batch jobs
 
-_${stamp(0.2)} — pixel-forge — session ${randomUUID()} — high — measured during the AVIF feature work_
+_${stamp(0.2)} — project 3 — session ${randomUUID()} — high — measured during the AVIF feature work_
 
 Default encoder speed made a 200-image batch take 9 minutes; speed 6 brought it to 70s with no visible loss.
 
 ## Permit pages render availability client-side — scrape the JSON endpoint instead
 
-_${stamp(1.1)} — trailhead — session ${randomUUID()} — medium — the scraper returned empty tables until this was found_
+_${stamp(1.1)} — project 1 — session ${randomUUID()} — medium — the scraper returned empty tables until this was found_
 
 The HTML has no availability data; the page fetches it from an XHR endpoint after load.
 `)
@@ -214,6 +258,7 @@ write(path.join(home, '.claude.json'), JSON.stringify({ mcpServers: {} }, null, 
 
 fs.mkdirSync(path.join(demo, 'localappdata'), { recursive: true })
 fs.mkdirSync(path.join(home, 'AppData', 'Roaming'), { recursive: true })
+fs.mkdirSync(path.join(claudeDir, 'sessions'), { recursive: true }) // for CLAUDE_HUB_SESSIONS_DIR
 
 console.log(`demo environment: ${demo}`)
 console.log(`registry: ${registryFile} (${registry.length} projects)`)

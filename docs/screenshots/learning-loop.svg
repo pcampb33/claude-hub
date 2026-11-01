@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 262" width="760" height="262" role="img" aria-labelledby="t">
+  <title id="t">A session ends, its lessons are drafted and reviewed, saved to the vault, and offered to a later session, whose end starts the loop again.</title>
+  <style>
+    :root { --bg: #ffffff; --box: #f6f8fa; --stroke: #d0d7de; --text: #1f2328; --muted: #656d76; --accent: #0969da; --accent-bg: #ddf4ff; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0d1117; --box: #161b22; --stroke: #30363d; --text: #e6edf3; --muted: #8d96a0; --accent: #4493f8; --accent-bg: #0c2d6b; }
+    }
+    .bg { fill: var(--bg); }
+    .box { fill: var(--box); stroke: var(--stroke); stroke-width: 1.5; }
+    .vault { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 1.5; }
+    .label { fill: var(--text); font: 600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; text-anchor: middle; dominant-baseline: middle; }
+    .sub { fill: var(--muted); font: 400 12.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; text-anchor: middle; dominant-baseline: middle; }
+    .phase { fill: var(--muted); font: 600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: 0.12em; }
+    .edge { fill: none; stroke: var(--muted); stroke-width: 1.75; marker-end: url(#arrow); }
+    .head { fill: var(--muted); }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="head" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="760" height="262" rx="12"/>
+
+  <text class="phase" x="30" y="26">CAPTURE</text>
+  <text class="phase" x="30" y="246">RECALL</text>
+
+  <!-- top row: capture -->
+  <rect class="box" x="30" y="40" width="190" height="62" rx="10"/>
+  <text class="label" x="125" y="63">A session ends</text>
+  <text class="sub" x="125" y="83">hook reads the transcript</text>
+
+  <rect class="box" x="285" y="40" width="190" height="62" rx="10"/>
+  <text class="label" x="380" y="63">Lessons drafted</text>
+  <text class="sub" x="380" y="83">cheap triage, then a draft</text>
+
+  <rect class="box" x="540" y="40" width="190" height="62" rx="10"/>
+  <text class="label" x="635" y="63">Reviewed</text>
+  <text class="sub" x="635" y="83">in the hub's inbox</text>
+
+  <!-- bottom row: recall -->
+  <rect class="vault" x="540" y="160" width="190" height="62" rx="10"/>
+  <text class="label" x="635" y="183">Saved to the vault</text>
+  <text class="sub" x="635" y="203">plain Markdown notes</text>
+
+  <rect class="box" x="285" y="160" width="190" height="62" rx="10"/>
+  <text class="label" x="380" y="183">Offered to a new task</text>
+  <text class="sub" x="380" y="203">up to 3 matching notes</text>
+
+  <path class="edge" d="M220,71 H281"/>
+  <path class="edge" d="M475,71 H536"/>
+  <path class="edge" d="M635,102 V156"/>
+  <path class="edge" d="M540,191 H479"/>
+  <path class="edge" d="M285,191 H125 V106"/>
+</svg>

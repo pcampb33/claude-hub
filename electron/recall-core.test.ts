@@ -44,7 +44,7 @@ test('decideRecallAction spends only once a session has proven it will keep talk
 })
 
 test('isEphemeralSessionCwd skips temp worktree arms but never real project dirs', () => {
-  const tmp = 'C:\\Users\\P_cam\\AppData\\Local\\Temp'
+  const tmp = 'C:\\Users\\J_doe\\AppData\\Local\\Temp'
   // A parallel-build worktree arm: measured 18 attempts, 0 ever delivered.
   assert.equal(isEphemeralSessionCwd(`${tmp}\\claude\\proj\\scratchpad\\ws-arm-a`, tmp), true)
   assert.equal(isEphemeralSessionCwd(tmp, tmp), true)
@@ -54,9 +54,9 @@ test('isEphemeralSessionCwd skips temp worktree arms but never real project dirs
   assert.equal(isEphemeralSessionCwd('C:\\projects\\claude-hub-sandbox\\Grade chug harness', tmp), false)
   assert.equal(isEphemeralSessionCwd('C:\\projects\\claude-hub', tmp), false)
   // Prefix-of-a-sibling must not count as "inside".
-  assert.equal(isEphemeralSessionCwd('C:\\Users\\P_cam\\AppData\\Local\\TempExtra\\x', tmp), false)
+  assert.equal(isEphemeralSessionCwd('C:\\Users\\J_doe\\AppData\\Local\\TempExtra\\x', tmp), false)
   // Slash form and trailing separators are the same path.
-  assert.equal(isEphemeralSessionCwd('c:/users/p_cam/appdata/local/temp/x', `${tmp}\\`), true)
+  assert.equal(isEphemeralSessionCwd('c:/users/j_doe/appdata/local/temp/x', `${tmp}\\`), true)
   assert.equal(isEphemeralSessionCwd('', tmp), false)
 })
 

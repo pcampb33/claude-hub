@@ -16,7 +16,7 @@ fs.writeFileSync(path.join(process.env.APP_ROOT, 'registry.json'), '[]')
 // silently reports zero sessions.
 test('sanitize maps drive colon, slashes, spaces and underscores to dashes', () => {
   assert.equal(sanitize('C:\\projects\\claude-hub'), 'C--projects-claude-hub')
-  assert.equal(sanitize('C:\\Users\\P_cam\\Desktop\\claude projects\\bladesbanter'), 'C--Users-P-cam-Desktop-claude-projects-bladesbanter')
+  assert.equal(sanitize('C:\\Users\\J_doe\\Desktop\\claude projects\\bladesbanter'), 'C--Users-J-doe-Desktop-claude-projects-bladesbanter')
 })
 
 // The regression: a dot must collapse too. Real on-disk dir for

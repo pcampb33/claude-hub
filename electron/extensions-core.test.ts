@@ -22,8 +22,8 @@ const MCP_LIST = [
   'plugin:design:slack: https://mcp.slack.com/mcp (HTTP) - ! Needs authentication',
   'plugin:design:google calendar:  (HTTP) - - Not configured',
   'playwright: npx @playwright/mcp --browser chromium - ✔ Connected',
-  'desktop-control: C:\\Users\\P_cam\\mcp-servers\\desktop-control\\.venv\\Scripts\\python.exe C:\\Users\\P_cam\\server.py - ✔ Connected',
-  'ewm-config: C:\\Users\\P_cam\\mcp-servers\\ewm-config\\run-mcp.cmd  - ✔ Connected',
+  'desktop-control: C:\\Users\\J_doe\\mcp-servers\\desktop-control\\.venv\\Scripts\\python.exe C:\\Users\\J_doe\\server.py - ✔ Connected',
+  'ewm-config: C:\\Users\\J_doe\\mcp-servers\\ewm-config\\run-mcp.cmd  - ✔ Connected',
   'odd: node run.js --label "a - b" (stdio) - ✗ Failed to connect',
   'local-thing: .mcp.json server - ⏸ Pending approval',
   'weird: x - ? Sleeping',
@@ -50,7 +50,7 @@ test('parseMcpList reads every line shape, splitting on the right ` - `', () => 
   })
   assert.equal(by['playwright'].target, 'npx @playwright/mcp --browser chromium')
   assert.match(by['desktop-control'].target!, /^C:\\Users\\.*server\.py$/)
-  assert.equal(by['ewm-config'].target, 'C:\\Users\\P_cam\\mcp-servers\\ewm-config\\run-mcp.cmd')
+  assert.equal(by['ewm-config'].target, 'C:\\Users\\J_doe\\mcp-servers\\ewm-config\\run-mcp.cmd')
   assert.equal(by['odd'].target, 'node run.js --label "a - b"')
   assert.equal(by['odd'].status, 'failed')
   assert.equal(by['local-thing'].status, 'pending-approval')

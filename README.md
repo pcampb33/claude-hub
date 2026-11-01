@@ -2,8 +2,8 @@
 
 A desktop control room for [Claude Code](https://claude.com/claude-code). It indexes every project
 I run Claude Code in and gives me one place to see sessions, usage, project health and the
-background automation. It also runs a knowledge flywheel: lessons from finished sessions are
-captured into a shared vault, and offered back to new sessions that need them.
+background automation. It also carries lessons from one session to the next: what a finished
+session learned is captured into a shared vault and offered back to later sessions that need it.
 
 Electron + Vite + React + TypeScript. Built for my own Windows machine, single user. I'm publishing
 it as a worked example of building a tool around Claude Code, not as a supported product.
@@ -15,11 +15,12 @@ it as a worked example of building a tool around Claude Code, not as a supported
 
 ## What it does
 
-**Sessions.** Every Claude Code transcript across every registered project, searchable, with the
-conversation, tool calls and context use per session. The Desktop tab hosts live Claude Code
-terminals inside the app (node-pty + xterm) in a host process that outlives the app.
+**Sessions.** The Desktop tab runs live Claude Code terminals side by side inside the app
+(node-pty + xterm), in a host process that outlives the app, with each session's state (working,
+needs you, your turn) at a glance. The History tab searches every transcript across every
+registered project.
 
-![Session history](docs/screenshots/sessions.png)
+![Desktop: three live Claude Code sessions working in parallel](docs/screenshots/sessions.png)
 
 **Projects.** Git state, latest sessions, a CLAUDE.md health score (stale references, oversized
 context), a per-project verify floor (lint/typecheck/test, recorded daily), and launch actions.
@@ -39,28 +40,34 @@ review inbox, and a scorecard that measures whether recalled notes actually get 
 
 Also: a skills and workflows catalog, MCP server/plugin health and usage, a sandbox for throwaway
 experiments, a command palette, and a Global view that grades every hook and scheduled job on
-evidence of work (log recency, failures, unfinished runs) rather than on configuration.
+evidence of work (log recency, failures, unfinished runs) rather than on configuration, and flags
+any job whose model spend passes a weekly ceiling.
 
-## The knowledge flywheel
+## Learning from past sessions
 
-```mermaid
-flowchart LR
-  S[Claude Code session ends] -->|SessionEnd hook| C[curate: haiku triage,<br/>sonnet extraction]
-  C --> I[_inbox.md]
-  I -->|review in the app, or<br/>daily drain for high confidence| V[(vault)]
-  V -->|UserPromptSubmit hook| R[recall: haiku matches<br/>the task to note titles]
-  R -->|up to 3 offers injected| N[a later session]
-```
+Claude Code sessions don't remember each other. A gotcha one session worked out, like a library
+quirk or a Windows path problem, gets rediscovered from scratch in the next. claude-hub closes
+that loop:
 
-Two global hooks run in every Claude Code session on the machine, not only in this repo:
+![A session ends, its lessons are drafted and reviewed, saved to the vault, and offered to a later session](docs/screenshots/learning-loop.svg)
 
-- **Curate** (`scripts/curate-session.mjs`) reads the finished transcript. A cheap triage decides
-  whether anything is worth keeping; only then does an extraction pass queue candidate notes.
-- **Recall** (`scripts/vault-recall.mjs`) matches the session's task against note titles in a
-  detached worker, so the prompt is never blocked, and injects the matches into a later turn.
+1. **Capture** ([`scripts/curate-session.mjs`](scripts/curate-session.mjs)). When a session ends, a
+   hook reads its transcript. A cheap model decides whether anything is worth keeping, and only
+   then does a stronger one draft a note. Drafts wait in an inbox for review; a daily job approves
+   only the high-confidence ones.
+2. **Recall** ([`scripts/vault-recall.mjs`](scripts/vault-recall.mjs)). When a session starts a
+   task, a background worker matches it against the vault's note titles and offers up to three
+   notes in a later turn, so the prompt is never held up.
 
-Every automation's model spend is rolled up per job, with a weekly ceiling that raises an
-attention item when a job starts costing more than it should.
+Both hooks are installed globally in Claude Code, so this works across every project, not only
+this one.
+
+It's measured, not assumed: the Knowledge view tracks whether offered notes actually get opened.
+Of the 11 offers that could still be checked against their transcripts, 5 were read and 4
+visibly changed what the session did next, for about $11 of model calls over 84 days. Matching on
+note bodies was tested too: a model shown every note's title and an excerpt of its text, for 19
+sessions that got no offer, found one real miss, and its title alone would have matched. So recall
+stays titles-only.
 
 ## How it's built
 

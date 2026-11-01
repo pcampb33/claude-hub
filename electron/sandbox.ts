@@ -8,10 +8,10 @@ import { headlessEnv } from './call-claude-core.ts'
 import { findSessionFiles, isHeadlessSessionCached, parseTranscriptFile } from './sessions.ts'
 import { queueVaultCandidate } from './vault-write-core.ts'
 import { VAULT_PATH } from './vault-core.ts'
+import { SANDBOX_PATH } from './registry.ts'
 import { endJob, findJobByPath, setJobKiller, setJobPhase, startJob, wasCancelled } from './sandbox-jobs.ts'
 import type { DraftLearningsResult, ExperimentEntry, QueueToInboxResult } from '../shared/ipc-types'
 
-const SANDBOX_PATH = 'C:\\projects\\claude-hub-sandbox'
 const VAULT_INDEX_PATH = path.join(VAULT_PATH, 'index.md')
 
 // Sync, cheap enumeration of experiment folders — kept synchronous because
