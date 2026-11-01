@@ -10,18 +10,6 @@ import {
 } from '../shared/ipc-types'
 import { buildInvokeApi } from './preload-core.ts'
 
-// --------- Expose some API to the Renderer process ---------
-contextBridge.exposeInMainWorld('ipcRenderer', {
-  on(...args: Parameters<typeof ipcRenderer.on>) {
-    const [channel, listener] = args
-    return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
-  },
-  off(...args: Parameters<typeof ipcRenderer.off>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.off(channel, ...omit)
-  },
-})
-
 // Every request/response method is generated from the channel map (see
 // preload-core.ts). What stays here is what actually differs: the three push
 // subscriptions, each of which wraps a listener so the renderer never touches

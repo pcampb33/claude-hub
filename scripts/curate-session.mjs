@@ -54,8 +54,15 @@ import { callClaudeSync } from '../electron/call-claude-core.ts'
 // These sum to 270s, leaving ~30s for transcript parsing, the vault read and
 // the queue write. A call that blows its budget now throws a named timeout this
 // script can log, instead of the process vanishing silently.
-const TRIAGE_TIMEOUT_MS = 60_000
-const EXTRACT_TIMEOUT_MS = 210_000
+//
+// The split was 60/210 until 2026-11-01, and the wrong way round. Over 30 days
+// a whole triage + extraction run never took more than 73s (p90 45s, 492 runs)
+// and no extraction timed out, while triage alone ran p50 13s, p90 33s, max
+// 57s: 9 real sessions hit the 60s limit and were never curated. (63 more
+// timeouts were headless transcripts, which curateStandDownReason now skips.)
+// If triages still time out at 120s, they are hangs, not slowness.
+const TRIAGE_TIMEOUT_MS = 120_000
+const EXTRACT_TIMEOUT_MS = 150_000
 import {
   MIN_TURNS_FOR_REVIEW,
   MIN_GROWTH_FOR_RETRIAGE,

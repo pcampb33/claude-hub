@@ -1,6 +1,6 @@
 // Rendering side of the vault graph's grouping: the cluster palette and the
 // project → color map. The pure community/graph math (detectCommunities,
-// sharedNeighborCounts, nodeDegree) lives in shared/community.ts so the
+// nodeDegree) lives in shared/community.ts so the
 // electron-side MOC generator can use it too.
 
 // A muted categorical palette on the app's warm-dark ground — there's no

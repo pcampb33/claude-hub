@@ -1,11 +1,3 @@
-.floor-error {
-  max-width: var(--content-width);
-  margin-bottom: var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--color-danger);
-  overflow-wrap: anywhere;
-}
-
 .floor-card-header {
   display: flex;
   align-items: center;

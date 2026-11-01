@@ -139,17 +139,6 @@ export function evaluateTriageOutput(raw: string): boolean {
   }
 }
 
-// Pull the [[note names]] out of the vault index so the extraction prompt can
-// tell the model what already exists and must not be duplicated.
-export function parseIndexTitles(indexText: string): string[] {
-  const titles: string[] = []
-  for (const line of indexText.split('\n')) {
-    const m = line.match(/\[\[([^\]]+)\]\]/)
-    if (m) titles.push(m[1].trim())
-  }
-  return titles
-}
-
 // The expensive pass (sonnet). Skeptical by construction: default to saving
 // nothing, dedup against the existing vault, and forced to argue against each
 // candidate before it commits — the write-side half of keeping slop out of the

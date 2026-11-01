@@ -456,8 +456,7 @@ input[type='checkbox'] {
 
 /* Empty state: centered faint glyph, one-line headline, one-line hint,
    optional action slot. */
-.empty-state,
-.loading-state {
+.empty-state {
   box-sizing: border-box;
   max-width: var(--content-width);
   display: flex;

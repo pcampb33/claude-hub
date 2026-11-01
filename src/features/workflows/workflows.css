@@ -838,10 +838,4 @@
   .workflow-detail-actions {
     flex: 1 1 100%;
   }
-
-  /* Three header buttons don't fit beside each other at 390px — wrap them
-     instead of crushing their labels onto multiple lines. */
-  .workflows-header-actions {
-    flex-wrap: wrap;
-  }
 }

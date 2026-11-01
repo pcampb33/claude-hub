@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { detectCommunities, nodeDegree, sharedNeighborCounts } from './community.ts'
+import { detectCommunities, nodeDegree } from './community.ts'
 import type { CommunityGraph } from './community.ts'
 
 function graph(ids: string[], pairs: Array<[string, string]>): CommunityGraph {
@@ -40,22 +40,6 @@ test('detectCommunities gives an isolated node its own cluster and dense indices
   // Indices are dense (0..k-1), assigned in note order → x's cluster is 0.
   assert.equal(c.get('x'), 0)
   assert.equal(c.get('lonely'), 1)
-})
-
-test('sharedNeighborCounts counts common neighbors of an edge, keyed source|target', () => {
-  // a and b both connect to c → edge a-b shares 1 neighbor.
-  const g = graph(
-    ['a', 'b', 'c'],
-    [
-      ['a', 'b'],
-      ['a', 'c'],
-      ['b', 'c'],
-    ],
-  )
-  const counts = sharedNeighborCounts(g)
-  assert.equal(counts.get('a|b'), 1)
-  assert.equal(counts.get('a|c'), 1)
-  assert.equal(counts.get('b|c'), 1)
 })
 
 test('nodeDegree is total degree: backlinks + outgoing', () => {

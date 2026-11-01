@@ -69,7 +69,7 @@ function loadRenderer(target: BrowserWindow, hash?: string): void {
 function createWindow() {
   win = new BrowserWindow({
     ...(HIDDEN_WINDOW ? { width: 1500, height: 950, show: false, focusable: false, skipTaskbar: true } : loadWindowBounds()),
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: path.join(process.env.VITE_PUBLIC, 'icon.png'),
     // Frameless with native Windows overlay controls. Starts in the default
     // theme's colours; the renderer recolours them to the saved theme on load
     // (window-theme.ts). Height matches the renderer's 36px titlebar strip
@@ -85,11 +85,6 @@ function createWindow() {
     },
   })
   if (!HIDDEN_WINDOW) trackWindowBounds(win)
-
-  // Test active push message to Renderer-process.
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', (new Date).toLocaleString())
-  })
 
   loadRenderer(win)
 

@@ -19,18 +19,6 @@ function base(className?: string) {
   }
 }
 
-/** Dashboard — four tiles, one offset. */
-export function DashboardIcon({ className }: IconProps) {
-  return (
-    <svg {...base(className)}>
-      <rect x="2" y="2" width="5" height="7" rx="1" />
-      <rect x="9" y="2" width="5" height="4" rx="1" />
-      <rect x="9" y="8" width="5" height="6" rx="1" />
-      <rect x="2" y="11" width="5" height="3" rx="1" />
-    </svg>
-  )
-}
-
 /** Home — a house outline. */
 export function HomeIcon({ className }: IconProps) {
   return (

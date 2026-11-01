@@ -116,7 +116,7 @@ test('readsInLine does not count shell commands that never name the note', () =>
   assert.deepEqual(readsInLine(shellLine(`echo "${TITLE} is relevant here"`), offered, VAULT), [])
 })
 
-test('a truncated tool_use line is unknown, not a miss', () => {
+test('a truncated tool_use line is unknown, not a miss', async () => {
   // Transcripts are appended live, so the last line of an in-flight session is
   // routinely a partial write. Counting that as "did not read" is what would
   // corrupt the unhook verdict.
@@ -124,18 +124,18 @@ test('a truncated tool_use line is unknown, not a miss', () => {
   const truncated = full.slice(0, full.length - 20) // cut mid-record, after "tool_use"
   assert.equal(readsInLine(truncated, offered, VAULT), null)
 
-  const scan = scanTranscriptLines([truncated, readLine('C:\\elsewhere\\note.md')], [TITLE], VAULT)
+  const scan = await scanTranscriptLines([truncated, readLine('C:\\elsewhere\\note.md')], [TITLE], VAULT)
   assert.deepEqual(scan.readTitles, [])
   assert.equal(scan.unparsedLines, 1)
 })
 
-test('scanTranscriptLines reports marker and deduped reads', () => {
+test('scanTranscriptLines reports marker and deduped reads', async () => {
   const lines = [
     JSON.stringify({ type: 'user', message: { role: 'user', content: `[vault-recall] The personal knowledge vault…` } }),
     readLine(`${VAULT}\\${TITLE}.md`),
     readLine(`${VAULT}\\${TITLE}.md`),
   ]
-  const result = scanTranscriptLines(lines, [TITLE], VAULT)
+  const result = await scanTranscriptLines(lines, [TITLE], VAULT)
   assert.equal(result.markerSeen, true)
   assert.deepEqual(result.readTitles, [TITLE])
 })

@@ -104,25 +104,6 @@ export function detectCommunities(graph: CommunityGraph): Map<string, number> {
   return densify(comm, graph)
 }
 
-// For each edge, how many neighbors its two endpoints share — a proxy for how
-// embedded (thick) the connection is, used for edge glow + thickness. Keyed
-// "source|target" to match the edge's own field order.
-export function sharedNeighborCounts(graph: CommunityGraph): Map<string, number> {
-  const adj = buildAdjacency(graph)
-  const counts = new Map<string, number>()
-  for (const e of graph.edges) {
-    const a = adj.get(e.source)
-    const b = adj.get(e.target)
-    let shared = 0
-    if (a && b) {
-      const [small, large] = a.size < b.size ? [a, b] : [b, a]
-      for (const x of small) if (large.has(x)) shared++
-    }
-    counts.set(`${e.source}|${e.target}`, shared)
-  }
-  return counts
-}
-
 // Total degree — backlinks + outgoing — drives node size (not backlinks-only
 // as the old SVG graph did).
 export function nodeDegree(note: { backlinks: string[]; outgoingLinks: string[] }): number {

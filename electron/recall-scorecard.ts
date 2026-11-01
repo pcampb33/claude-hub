@@ -174,16 +174,19 @@ export function readsInLine(line: string, offered: Map<string, string>, vaultDir
   return out
 }
 
-export function scanTranscriptLines(
-  lines: Iterable<string>,
+// One scanner for the tests and the real transcripts: production streams the
+// file through it (transcripts run to many MB). It used to keep a copy of
+// this loop, so the tests checked a function production never called.
+export async function scanTranscriptLines(
+  lines: Iterable<string> | AsyncIterable<string>,
   offeredTitles: string[],
   vaultDir: string,
-): ScanResult {
+): Promise<ScanResult> {
   const offered = new Map(offeredTitles.map((t) => [t.toLowerCase(), t]))
   let markerSeen = false
   let unparsedLines = 0
   const readTitles: string[] = []
-  for (const line of lines) {
+  for await (const line of lines) {
     if (!markerSeen && line.includes(RECALL_MARKER)) markerSeen = true
     const hits = readsInLine(line, offered, vaultDir)
     if (hits === null) {
@@ -203,25 +206,9 @@ interface ScanResult {
   unparsedLines: number // tool_use lines that would not parse — reads unknown, not absent
 }
 
-async function scanTranscriptFile(filePath: string, offeredTitles: string[], vaultDir: string): Promise<ScanResult> {
-  // Transcripts can run to many MB — stream rather than buffer the file.
-  const offered = new Map(offeredTitles.map((t) => [t.toLowerCase(), t]))
-  let markerSeen = false
-  let unparsedLines = 0
-  const readTitles: string[] = []
+function scanTranscriptFile(filePath: string, offeredTitles: string[], vaultDir: string): Promise<ScanResult> {
   const rl = readline.createInterface({ input: fs.createReadStream(filePath, 'utf-8'), crlfDelay: Infinity })
-  for await (const line of rl) {
-    if (!markerSeen && line.includes(RECALL_MARKER)) markerSeen = true
-    const hits = readsInLine(line, offered, vaultDir)
-    if (hits === null) {
-      unparsedLines++
-      continue
-    }
-    for (const t of hits) {
-      if (!readTitles.includes(t)) readTitles.push(t)
-    }
-  }
-  return { markerSeen, readTitles, unparsedLines }
+  return scanTranscriptLines(rl, offeredTitles, vaultDir)
 }
 
 // Session ids come from the hook's log (ultimately from Claude Code hook

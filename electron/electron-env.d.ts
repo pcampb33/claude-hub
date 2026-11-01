@@ -23,6 +23,5 @@ declare namespace NodeJS {
 
 // Used in Renderer process, exposed in `preload.ts`
 interface Window {
-  ipcRenderer: Pick<import('electron').IpcRenderer, 'on' | 'off'>
   hubApi: import('../shared/ipc-types').HubApi
 }

@@ -8,7 +8,6 @@ import {
   stripCodeFence,
   evaluateReviewOutput,
   evaluateTriageOutput,
-  parseIndexTitles,
   buildExtractPrompt,
   extractResultFromJsonOutput,
   deriveProjectName,
@@ -111,11 +110,6 @@ test('evaluateTriageOutput returns true only for explicit hasCandidate:true', ()
   assert.equal(evaluateTriageOutput('```json\n{"hasCandidate": true}\n```'), true)
   assert.equal(evaluateTriageOutput('{"hasCandidate": false}'), false)
   assert.equal(evaluateTriageOutput('not json'), false) // unparseable → don't spend the extract call
-})
-
-test('parseIndexTitles pulls [[note names]] out of the index', () => {
-  const index = '# Knowledge Vault Index\n\n- [[First Note]]\n- [[Second Note]]\n- not a link\n'
-  assert.deepEqual(parseIndexTitles(index), ['First Note', 'Second Note'])
 })
 
 test('buildExtractPrompt injects the rubric, lists existing titles for dedup, and defaults to saving nothing', () => {
