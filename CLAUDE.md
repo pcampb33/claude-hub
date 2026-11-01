@@ -46,10 +46,11 @@ No flag may mean both "not yet" and "never". The recurring bug here is not a swa
 
 ## Background machinery (details in `docs/automation.md`)
 
-- Global hooks in `~/.claude/settings.json`, running in every project: `scripts/curate-session.mjs` (SessionEnd: haiku triage, then sonnet extraction queues candidates to the vault's `_inbox.md`) and `scripts/vault-recall.mjs` (UserPromptSubmit: a detached haiku worker matches the session's task against vault note titles and injects up to 3 offers with a `[vault-recall]` marker).
+- Global hooks in `~/.claude/settings.json`, started in every session but acting only inside claude-hub's scope (the install's parent folder, the sandbox, registered projects; `electron/hook-scope.ts`), where they exit before reading anything: `scripts/curate-session.mjs` (SessionEnd: haiku triage, then sonnet extraction queues candidates to the vault's `_inbox.md`) and `scripts/vault-recall.mjs` (UserPromptSubmit: a detached haiku worker matches the session's task against vault note titles and injects up to 3 offers with a `[vault-recall]` marker).
 - Scheduled jobs, enumerated by the `claude-hub` name prefix: floor verify (04:45), inbox drain (noon, auto-promotes high-confidence clusters). A new job's action must be `wscript.exe //B //Nologo scripts\run-hidden.vbs <exe> [args]`; a direct `node.exe` or `powershell -WindowStyle Hidden` opens a console that steals focus.
 - Every automation `claude -p` sets `CLAUDE_HUB_HEADLESS=1` so the hooks don't recurse on the hub's own calls.
 - One shared vault (`C:\projects\claude-hub-vault`), not one per project. Decided on measured cross-project link value; don't re-litigate without new numbers.
+- Anything that writes outside the hub's own folder (global config, other repos, Task Scheduler, data folders) must show in the Settings page's footprint card (`electron/footprint.ts`), read from the real state. The user keeps track of what claude-hub applies through that card, so an unlisted write is a hidden one.
 - The Global view grades every hook and job on a work probe (log recency, ledger records), never on configuration. A job with no probe grades `unknown`, never `ok`. Anything `attention` or `unknown` also shows in the dashboard's Needs-attention feed.
 
 There is no hub server or phone build anymore (retired 2026-10-17; see the end of `docs/automation.md`). Don't reintroduce an HTTP transport or Agent SDK session ownership without a new reason.

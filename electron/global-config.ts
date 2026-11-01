@@ -19,6 +19,7 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import type { GlobalAutomation, GlobalConfigReport, GlobalItemState, GlobalSettings, JobFreshness } from '../shared/ipc-types.ts'
 import { getJobFreshness, spendBreach } from './job-freshness.ts'
+import { getFootprint } from './footprint.ts'
 import { listSkills } from './skills.ts'
 import { openPathInVSCode } from './launch-core.ts'
 
@@ -463,6 +464,7 @@ export async function getGlobalConfig(): Promise<GlobalConfigReport> {
     automations,
     settings,
     schedulerError,
+    footprint: getFootprint(),
   }
 }
 

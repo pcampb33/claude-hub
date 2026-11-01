@@ -74,6 +74,7 @@ import {
 // Shared with the recall hook rather than reimplemented — the two hooks must
 // agree on what counts as a throwaway session.
 import { isEphemeralSessionCwd } from '../electron/recall-core.ts'
+import { hookScope, inHookScope, OUT_OF_SCOPE } from '../electron/hook-scope.ts'
 
 // registry.ts reads process.env.APP_ROOT lazily inside its functions, but a
 // hook invocation runs with whatever cwd the session that triggered it had
@@ -144,6 +145,16 @@ async function main() {
   const hookInput = readHookInput()
   const transcriptPath = hookInput.transcript_path
   const sessionId = hookInput.session_id ?? 'unknown'
+  // First, before the transcript is opened: this hook is registered globally,
+  // so Claude Code starts it in every session, but it only acts on claude-hub's
+  // workspace and registered projects (electron/hook-scope.ts).
+  const cwd = hookInput.cwd ?? process.cwd()
+  const scope = hookScope(process.env.APP_ROOT)
+  if (scope.error) log(`warn: ${scope.error}; scope narrowed to the workspace and sandbox`)
+  if (!inHookScope(cwd, scope.roots)) {
+    log(`exit: ${OUT_OF_SCOPE} (session=${sessionId})`)
+    process.exit(0)
+  }
   log(
     `start session=${sessionId} transcript=${transcriptPath}` +
       (RUBRIC_OVERRIDE || INBOX_OVERRIDE
@@ -163,7 +174,6 @@ async function main() {
   }
 
   // Before the pre-filter, so a doubled session costs nothing at all.
-  const cwd = hookInput.cwd ?? process.cwd()
   if (!INBOX_OVERRIDE && hasProjectScopedRegistration(cwd)) {
     log(`exit: project at ${cwd} registers its own scoped curate hook — standing down`)
     process.exit(0)

@@ -272,6 +272,26 @@ export interface GlobalConfigReport {
   // then reports 'unknown' and this says why, rather than the page implying
   // there are no scheduled jobs.
   schedulerError: string | null
+  footprint: HubFootprint
+}
+
+// Everything claude-hub has applied outside its own folder, read from the real
+// state each time (electron/footprint.ts), so it can't drift from what is
+// actually there. Anything new that writes outside the folder belongs here.
+export interface HubFootprint {
+  // Where the global hooks act (electron/hook-scope.ts). error = the registry
+  // couldn't be read, so the hooks are running on the workspace alone.
+  scope: { workspace: string; outside: { name: string; path: string }[]; error: string | null }
+  // Last 30 days, from the hooks' own logs. null = that log couldn't be read
+  // (a missing log is 0: the hook has not run).
+  // reviewed = sessions curate paid a model call for; outside = stood down out of scope.
+  curate: { reviewed: number; outside: number } | null
+  recallOutside: number | null
+  // Projects whose .claude/settings.local.json carry deny rules the hub wrote.
+  // null = boundaries.json couldn't be read; denyRulesError says why.
+  denyRules: { name: string; rules: number }[] | null
+  denyRulesError: string | null
+  folders: { label: string; path: string }[]
 }
 
 export interface VaultNote {

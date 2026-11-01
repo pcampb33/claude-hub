@@ -30,6 +30,7 @@ const config = (states: ('ok' | 'attention' | 'unknown')[], schedulerError: stri
   generatedAt: '',
   schedulerError,
   settings: {} as GlobalConfigReport['settings'],
+  footprint: {} as GlobalConfigReport['footprint'],
   automations: states.map((state, i) => ({
     id: `a${i}`,
     label: `Job ${i}`,

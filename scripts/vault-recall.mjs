@@ -65,6 +65,7 @@ const {
   MAX_ATTEMPTS_PER_DAY,
 } = await import('../electron/recall-core.ts')
 const { listProjects } = await import('../electron/registry.ts')
+const { hookScope, inHookScope, OUT_OF_SCOPE } = await import('../electron/hook-scope.ts')
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -133,10 +134,19 @@ function runHook() {
   const hookInput = JSON.parse(fs.readFileSync(0, 'utf-8'))
   const sessionId = hookInput.session_id ?? 'unknown'
   const prompt = typeof hookInput.prompt === 'string' ? hookInput.prompt : ''
+  // First: registered globally, this runs on every prompt in every session,
+  // but it only acts in claude-hub's workspace and registered projects
+  // (electron/hook-scope.ts). Logged once per task-like prompt, not per turn.
+  const cwd = hookInput.cwd ?? process.cwd()
+  const scope = hookScope(process.env.APP_ROOT)
+  if (scope.error) log(`warn: ${scope.error}; scope narrowed to the workspace and sandbox`)
+  if (!inHookScope(cwd, scope.roots)) {
+    if (shouldAttemptRecall(prompt)) log(`exit: ${OUT_OF_SCOPE} (session=${sessionId})`)
+    return
+  }
   fs.mkdirSync(STATE_DIR, { recursive: true })
 
   const pending = resultPath(sessionId)
-  const cwd = hookInput.cwd ?? process.cwd()
   const action = decideRecallAction({
     hasResult: fs.existsSync(pending),
     hasAttempted: fs.existsSync(markerPath(sessionId)),

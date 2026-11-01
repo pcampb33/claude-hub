@@ -5,6 +5,7 @@ import { useReportLoading } from '../shared/appLoading'
 import { relativeTime } from '../shared/relative-time'
 import { useGlobalConfig } from './useGlobalConfig'
 import { ThemePicker } from './ThemePicker'
+import { Footprint } from './Footprint'
 import './global.css'
 
 // The layer above every project. Deliberately one page of rows rather than a
@@ -90,7 +91,7 @@ export function GlobalView() {
     <section className="global-view">
       <ViewHeader
         title="Settings"
-        subtitle="The app's theme, then everything that runs in every session, runs on a schedule, or applies to every project. Each row is graded on whether it is doing its job — not on whether it is configured, which is a different question and the one that hides broken automation."
+        subtitle="The app's theme, what claude-hub applies outside its own folder, then everything that runs on a schedule, runs in your sessions, or applies to every project. Each row is graded on whether it is doing its job — not on whether it is configured, which is a different question and the one that hides broken automation."
         actions={<RefreshAction loading={loading} onClick={() => refresh()} />}
       />
       {error && <ErrorNotice message={error} onRetry={() => refresh()} />}
@@ -98,6 +99,9 @@ export function GlobalView() {
 
       <h3 className="global-section-title">Theme</h3>
       <ThemePicker />
+
+      <h3 className="global-section-title">What claude-hub applies outside its folder</h3>
+      {report && <Footprint footprint={report.footprint} hooks={hooks.length} scheduled={scheduled.length} />}
 
       <h3 className="global-section-title">Runs on a schedule</h3>
       {report?.schedulerError && (
@@ -120,7 +124,7 @@ export function GlobalView() {
         )}
       </div>
 
-      <h3 className="global-section-title">Runs in every session</h3>
+      <h3 className="global-section-title">Runs in sessions inside the scope</h3>
       <div className="global-rows">
         {hooks.map((item) => (
           <AutomationRow key={item.id} item={item} busy={false} onRun={runTask} onOpenLog={openFile} />
