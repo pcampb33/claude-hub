@@ -1,0 +1,388 @@
+/* Inbox = a sequential triage queue, so the whole view keeps a single reading
+   column (the old auto-fit card grid zig-zagged the reading order) — on the
+   default reading measure, not the wide one: nothing here is a dashboard, a
+   card grid, or a master-detail, and the widest thing a row can hold already
+   caps itself at 78ch, so the extra width only pushed each row's date a
+   screen away from its title. Left-anchored (as the base .view-header rule
+   is) so the view still starts on the same edge as its siblings. */
+.inbox-view .view-header,
+.inbox-view .view-header-subtitle,
+.inbox-body {
+  max-width: var(--content-width);
+}
+
+/* ---- triage toolbar: confidence chips + position counter ---- */
+.triage-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.triage-bar .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 0.18rem 0.65rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.triage-bar .chip.active {
+  background: var(--bg-raised);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.chip-n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.triage-count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.triage-none {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.conf-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+.conf-dot.conf-high {
+  background: var(--ok);
+}
+.conf-dot.conf-medium {
+  background: var(--text-faint);
+}
+.conf-dot.conf-low {
+  background: var(--warn);
+}
+.conf-dot.conf-none {
+  background: var(--border-strong);
+}
+
+/* ---- the queue ---- */
+.triage-queue {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.q-row {
+  border-bottom: 1px solid var(--border-subtle);
+  border-left: 2px solid transparent;
+}
+.q-row:last-child {
+  border-bottom: none;
+}
+.q-row.selected {
+  border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 4%, var(--bg-surface));
+}
+
+/* Collapsed row: one calm line. */
+.q-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
+  cursor: pointer;
+}
+.q-row.selected .q-line {
+  cursor: default;
+}
+.q-row:not(.selected) .q-line:hover {
+  background: color-mix(in srgb, var(--bg-raised) 55%, transparent);
+}
+
+.q-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: var(--text-md);
+}
+
+.q-meta {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.inbox-tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.4rem;
+}
+
+.q-when {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quiet per-row actions: hover swaps the date for Add / Discard. */
+.q-quick {
+  display: none;
+  gap: var(--space-1);
+}
+.q-line:hover .q-quick {
+  display: inline-flex;
+}
+.q-line:hover .q-when {
+  display: none;
+}
+
+.btn-tiny {
+  font-size: var(--text-xs);
+  padding: 0.18em 0.6em;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+}
+.btn-tiny.q-quick-add {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+/* Confidence = strength of the curator's "add this" suggestion. */
+.conf-high {
+  color: var(--ok);
+  background-color: color-mix(in srgb, var(--ok) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+}
+.conf-medium {
+  color: var(--text-secondary);
+  background-color: color-mix(in srgb, var(--text-secondary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--text-secondary) 30%, transparent);
+}
+.conf-low {
+  color: var(--warn);
+  background-color: color-mix(in srgb, var(--warn) 12%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
+}
+
+/* The confidence dot must never pick up the badge tint rules above. */
+.conf-dot.conf-high,
+.conf-dot.conf-medium,
+.conf-dot.conf-low {
+  border: none;
+  padding: 0;
+}
+
+/* Selected row expands into the decision card. */
+.q-open {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.q-why {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 78ch;
+  margin: 2px 0 var(--space-3);
+}
+
+.q-preview-toggle {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  margin-bottom: var(--space-3);
+  background: none;
+  border: none;
+  padding: 0;
+}
+.q-preview-toggle:hover {
+  color: var(--text-secondary);
+}
+
+.q-preview-tri {
+  display: inline-block;
+  font-size: 9px;
+  margin-right: 4px;
+  transition: transform var(--dur-fast);
+}
+.q-preview-tri.open {
+  transform: rotate(90deg);
+}
+
+.q-preview-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 78ch;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  margin: 0 0 var(--space-3);
+}
+
+.q-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.inbox-approve {
+  font-weight: 600;
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background-color: var(--accent-muted);
+  padding: 0.45em 1.1em;
+}
+.inbox-approve:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.inbox-reject {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.inbox-reject:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.q-keys {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+.q-actions .q-keys {
+  margin-left: auto;
+}
+
+.inbox-view kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  border: 1px solid var(--border-default);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 5px;
+  background: var(--bg-inset);
+}
+
+/* ---- footer: keyboard legend + session tally ---- */
+.queue-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.queue-tally {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+.queue-tally b {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ---- approve toast (local: carries the View-in-Knowledge stitch) ---- */
+.inbox-toast {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elev-2);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  max-width: 560px;
+}
+
+.inbox-toast-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  flex: none;
+}
+
+.inbox-toast-msg {
+  color: var(--text-secondary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.inbox-toast-msg b {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.inbox-toast-link {
+  color: var(--accent);
+  font-weight: 500;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.inbox-toast-link:hover {
+  text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .inbox-toast {
+    animation: toast-in var(--dur-base, 0.18s) ease-out;
+  }
+}
+
+/* Phone: hover-only quick actions don't exist, and the meta column crowds a
+   narrow row — keep title + date, let the decision card carry the actions. */
+@media (max-width: 720px) {
+  .q-quick {
+    display: none !important;
+  }
+  .q-line:hover .q-when {
+    display: inline;
+  }
+  .q-keys {
+    display: none;
+  }
+  .queue-tally {
+    margin-left: 0;
+  }
+}

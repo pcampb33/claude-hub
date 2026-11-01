@@ -1,0 +1,242 @@
+/* Read-first rubric view (mockup: rubric--read-first.html): everything sits
+   on one measure — the default reading one, because this view is a single
+   policy document, not a dashboard, card grid, or master-detail. Left-anchored
+   rather than centred (the base .view-header rule does the same) so the view
+   still starts on the same edge as its siblings; centring a narrower column
+   would inset the whole view, which is the thing that was wrong before. The
+   editor swaps in at the same width. */
+.rubric-view .view-header,
+.rubric-view .view-header-subtitle,
+.rubric-editor,
+.rubric-read {
+  max-width: var(--content-width);
+}
+
+.rubric-editor {
+  display: block;
+  width: 100%;
+  min-height: 60vh;
+  resize: vertical;
+  padding: var(--space-4);
+  color: inherit;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.rubric-editor:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.rubric-editor:disabled {
+  opacity: 0.6;
+}
+
+.rubric-save {
+  font-weight: 600;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  background-color: var(--accent-muted);
+}
+
+.rubric-save:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+/* ---- read view ---- */
+.rubric-read {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.rubric-read code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  background-color: color-mix(in srgb, var(--text-secondary) 12%, transparent);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 0 0.3em;
+}
+
+.rubric-section-label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+.rubric-section-label strong {
+  color: var(--text-primary);
+}
+
+.rubric-section-label.keep::before,
+.rubric-section-label.reject::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.5em;
+  vertical-align: 1px;
+}
+
+.rubric-section-label.keep::before {
+  background-color: var(--ok);
+}
+
+.rubric-section-label.reject::before {
+  background-color: var(--danger);
+}
+
+/* Keep criteria — 2x2 green-edged cards. */
+.rubric-keep-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.rubric-keep-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid color-mix(in srgb, var(--ok) 55%, transparent);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.rubric-keep-card h4 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.rubric-keep-card p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.rubric-keep-card p em {
+  color: var(--text-primary);
+}
+
+.rubric-keep-test {
+  display: inline-block;
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+/* Reject rules — compact ×-marked two-column list. */
+.rubric-reject-panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.rubric-reject-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--space-6);
+}
+
+.rubric-reject-list li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  padding: var(--space-1) 0;
+}
+
+.rubric-x {
+  color: var(--danger);
+  font-weight: 700;
+  font-size: var(--text-xs);
+}
+
+/* Tie-breaker — warn callout. */
+.rubric-tiebreak {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  background-color: color-mix(in srgb, var(--warn) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.rubric-tiebreak-label {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--warn);
+}
+
+.rubric-tiebreak p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+
+.rubric-tiebreak p em {
+  color: var(--text-secondary);
+  font-style: normal;
+}
+
+/* Note anatomy — pills. */
+.rubric-anatomy {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.rubric-anatomy-lead {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.rubric-anatomy-part {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  background-color: var(--accent-muted);
+  border-radius: var(--radius-pill);
+  padding: 0.15rem 0.6rem;
+  white-space: nowrap;
+}
+
+.rubric-anatomy-sep {
+  color: var(--text-faint);
+}
+
+.rubric-provenance {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+}
+
+/* Narrow: the 2-column grids collapse. */
+@media (max-width: 720px) {
+  .rubric-keep-grid,
+  .rubric-reject-list {
+    grid-template-columns: 1fr;
+  }
+}

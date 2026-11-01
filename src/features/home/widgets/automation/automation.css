@@ -1,0 +1,295 @@
+/* Automation widget (board) and its peek. Grades: ok green, attention amber,
+   unknown a hollow ring — a probe that could not tell is not a finding. */
+
+[data-widget='automation'] .auto {
+  display: grid;
+  gap: var(--space-3);
+}
+
+[data-widget='automation'] .auto-top {
+  display: grid;
+  grid-template-columns: 124px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+[data-widget='automation'] .auto-dial {
+  width: 124px;
+}
+
+.auto-ring {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 7;
+}
+
+.auto-hr {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  fill: var(--text-faint);
+  text-anchor: middle;
+}
+
+.auto-hand {
+  stroke: var(--warn);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.auto-hub {
+  fill: var(--warn);
+}
+
+.auto-dot {
+  stroke: var(--bg-surface);
+  stroke-width: 2;
+}
+
+.auto-dot.g-ok {
+  fill: var(--ok);
+}
+
+.auto-dot.g-attention {
+  fill: var(--warn);
+}
+
+.auto-dot.g-unknown {
+  fill: var(--bg-surface);
+  stroke: var(--text-secondary);
+  stroke-width: 1.5;
+}
+
+[data-widget='automation'] g[data-peek] {
+  cursor: pointer;
+}
+
+[data-widget='automation'] .auto-side {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  align-content: center;
+}
+
+[data-widget='automation'] .auto-line {
+  cursor: pointer;
+  min-width: 0;
+  border-radius: var(--radius-sm);
+}
+
+[data-widget='automation'] .auto-line b {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-widget='automation'] .auto-line span {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+[data-widget='automation'] .auto-group {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+[data-widget='automation'] .auto-group h6 {
+  margin: 0 0 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+
+[data-widget='automation'] .auto-item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  font-size: var(--text-xs);
+  padding: 2px 4px;
+  margin: 0 -4px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+[data-widget='automation'] .auto-item:hover {
+  background-color: var(--bg-raised);
+}
+
+[data-widget='automation'] .auto-item span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-widget='automation'] .auto-item em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.auto-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: block;
+  box-sizing: border-box;
+}
+
+.auto-pip.g-ok {
+  background-color: var(--ok);
+}
+
+.auto-pip.g-attention {
+  background-color: var(--warn);
+}
+
+.auto-pip.g-unknown {
+  border: 1px solid var(--text-secondary);
+}
+
+[data-widget='automation'] .auto-warn {
+  font-size: var(--text-xs);
+  color: var(--warn);
+}
+
+[data-widget='automation'] .auto-none {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+[data-widget='automation'] .auto-floors {
+  display: grid;
+  gap: 6px;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+[data-widget='automation'] .auto-cap {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+[data-widget='automation'] .auto-cap span {
+  color: var(--text-faint);
+}
+
+[data-widget='automation'] .auto-fl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+[data-widget='automation'] .auto-fl-name {
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+[data-widget='automation'] .auto-fl-days {
+  display: flex;
+  gap: 3px;
+}
+
+[data-widget='automation'] .auto-day {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: block;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.auto-day.d-green,
+.auto-cell.d-green i {
+  background-color: var(--ok);
+}
+
+.auto-day.d-red,
+.auto-cell.d-red i {
+  background-color: var(--danger);
+}
+
+.auto-day.d-none,
+.auto-cell.d-none i {
+  border: 1px solid var(--border-strong);
+}
+
+/* M and wider: a bigger dial, and the floor strips start where the side
+   column does, so both read down one edge instead of stretching across. */
+[data-widget='automation'] .auto-wide .auto-top,
+[data-widget='automation'] .auto-wide .auto-fl {
+  grid-template-columns: 156px minmax(0, 380px);
+  gap: var(--space-5);
+  justify-content: start;
+}
+
+[data-widget='automation'] .auto-wide .auto-dial {
+  width: 156px;
+}
+
+/* ---- peek ---- */
+
+.peek .auto-hero {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.peek .auto-strip {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.peek .auto-cell {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 5px 0 3px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.peek .auto-cell:hover {
+  background-color: var(--bg-raised);
+}
+
+.peek .auto-cell.on {
+  background-color: var(--accent-muted);
+}
+
+.peek .auto-cell i {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  display: block;
+  box-sizing: border-box;
+}
+
+.peek .auto-cell small {
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+
+.peek .auto-warnings {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--warn);
+  font-size: var(--text-sm);
+  display: grid;
+  gap: 4px;
+}

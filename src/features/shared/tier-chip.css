@@ -1,0 +1,24 @@
+/* Boundary tier chip (Config list and detail, Desktop tiles and dock).
+   Guarded reads as accent, Audit as neutral: neither is a safety verdict. */
+.tier-chip {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-default);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background-color: transparent;
+}
+
+.tier-chip[data-tier='guarded'] {
+  border-color: var(--accent-border);
+  background-color: var(--accent-muted);
+  color: var(--accent);
+}

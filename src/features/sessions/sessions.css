@@ -1,0 +1,596 @@
+/* Center the header + its ⓘ subtitle over the wide grid, matching
+   Workflows/Skills. */
+.sessions-view .view-header,
+.sessions-view .view-header-subtitle {
+  max-width: var(--content-width-wide);
+  margin-inline: auto;
+}
+
+.session-panes {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+  max-width: var(--content-width-wide);
+  margin: 0 auto;
+}
+
+/* ---- master column ---- */
+.session-master-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: sticky;
+  top: var(--space-4);
+}
+
+.session-master {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  /* Viewport minus header + filter row, so the sticky master column never
+     scrolls past the fold. */
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+}
+
+.session-group-head {
+  /* Group label left, the right rail's column label ("context") over the
+     percentages it names — same 12px right padding as the rows, so it sits
+     directly above them. */
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: var(--space-3) var(--space-3) var(--space-1);
+}
+
+.session-master-row {
+  display: flex;
+  flex-direction: column;
+  /* Chromium's UA stylesheet gives <button> align-items: flex-start, which
+     keeps the two row lines content-sized — the right rail (age, ctx %)
+     needs them stretched to the row. */
+  align-items: stretch;
+  gap: 3px;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.session-master-row:hover:not(.active) {
+  background-color: var(--bg-raised);
+}
+
+.session-master-row.active {
+  background-color: color-mix(in srgb, var(--accent) 15%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.session-master-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.session-master-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Fixed right rail for the row's scanned values (age on line 1, context %
+   on line 2) — they never truncate; the title/meta text does instead. */
+.session-master-time {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  flex: none;
+}
+
+.session-master-meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-left: 15px;
+  min-width: 0;
+}
+
+.session-master-meta-txt {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.session-master-ctx {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  flex: none;
+}
+
+.session-master-ctx.hot {
+  color: var(--warn);
+}
+
+.session-master-empty {
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+}
+
+/* ---- state dot: hub-owned glows accent, live green, idle amber ---- */
+.session-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background-color: var(--border-strong);
+}
+
+.session-pulse-active {
+  background-color: var(--ok);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--ok) 60%, transparent);
+}
+
+.session-pulse-idle {
+  background-color: var(--warn);
+}
+
+/* ---- detail pane ---- */
+.session-detail {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  min-height: 420px;
+  max-height: calc(100vh - 160px);
+}
+
+.session-detail-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.session-detail-head > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.session-detail-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.session-detail-sub {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.session-detail-body {
+  flex: 1;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+  /* Scrolled content used to meet the header at a hard edge, so the top line
+     was sliced mid-glyph and read as a rendering fault rather than "there is
+     more above". The mask is anchored to the box, not the content, and spans
+     exactly the body's own top padding — so nothing fades while the
+     transcript sits at its top. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--space-4));
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--space-4));
+}
+
+.session-loading {
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+}
+
+.session-turn {
+  max-width: 85%;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Assistant prose rendered through markdown-lite: the bubble's pre-wrap is
+   for the verbatim path (user turns, the fallback, a streaming tail) and
+   would preserve whitespace the parser has already collapsed. */
+.session-turn .session-turn-md {
+  white-space: normal;
+}
+
+/* ---- find in transcript (Ctrl+F) ---- */
+.session-find {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-inset);
+}
+
+.session-find input {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+}
+
+.session-find-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.session-find button {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0 8px;
+  line-height: 1.6;
+}
+
+.session-find button:disabled {
+  opacity: 0.4;
+}
+
+/* Every hit is tinted; the one the stepper is parked on is the solid one,
+   so "3 / 12" has something on screen to point at. */
+.session-detail-body mark {
+  background-color: color-mix(in srgb, var(--accent) 26%, transparent);
+  color: var(--accent-hover);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.session-detail-body mark.is-current {
+  background-color: var(--accent);
+  color: var(--bg-base);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.session-turn-user {
+  align-self: flex-end;
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border-strong);
+}
+
+.session-turn-assistant {
+  align-self: flex-start;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Search's match accent — the ‹ › stepper walks these nodes. */
+.session-turn-matched {
+  border-color: var(--accent-border);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* Runs of 1-2 chips share a line instead of taking one each. */
+.session-toolrow {
+  align-self: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.session-toolchip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 4px 11px;
+}
+
+.session-toolchip-mark {
+  color: var(--ok);
+}
+
+/* ---- tool-call roll-up: a run of ≥3 consecutive chips collapses into one
+   inset strip with a per-tool tally; click to expand the chips inline. ---- */
+.session-toolrun {
+  align-self: stretch;
+  /* Capped to the prose column's own width. A full-pane strip between
+     shrink-to-fit bubbles is what made the transcript's right edge zigzag
+     down the page; at 85% the strip and the widest bubble share one edge. */
+  max-width: 85%;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.session-toolrun-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  text-align: left;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.session-toolrun-caret {
+  color: var(--text-faint);
+  flex: none;
+}
+
+.session-toolrun-count {
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  flex: none;
+}
+
+.session-toolrun-tally {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.session-toolrun-body {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Chips inside an expanded run sit on the inset strip, so they lift to the
+   surface color; loose chips (runs of 1-2) keep the inset look. */
+.session-toolrun-body .session-toolchip {
+  background-color: var(--bg-surface);
+  align-self: auto;
+}
+
+.session-detail-skeleton {
+  height: 420px;
+  border-radius: var(--radius-md);
+}
+
+/* Deep link to a session outside the capped recent window — shown INSTEAD of
+   a silently-substituted newest session. */
+.session-missing-notice {
+  align-self: start;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  background-color: var(--bg-surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+/* ---- subagents ---- */
+
+/* Same inset-strip look as .session-toolrun so the shared
+   .session-toolrun-head disclosure reads identically inside it. */
+.session-subagents {
+  align-self: stretch;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.session-subagents-body {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-1) 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.session-subagent-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+}
+
+button.session-subagent-row:hover {
+  background-color: var(--bg-surface);
+  cursor: pointer;
+}
+
+/* Meta-only agents (killed / never ran) — visible but clearly inert. */
+.session-subagent-dead {
+  color: var(--text-faint);
+}
+
+.session-subagent-type {
+  flex: none;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  color: var(--text-primary);
+}
+
+.session-subagent-dead .session-subagent-type {
+  color: inherit;
+}
+
+.session-subagent-desc {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-subagent-branch {
+  flex: none;
+  max-width: 180px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-subagent-dur {
+  flex: none;
+  margin-left: auto;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* Swapped-in subagent transcript: back affordance + one-line identity head.
+   NOT .drill-back — that class is display:none outside the phone layout. */
+.session-subagent-back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.session-subagent-openhead {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  border-bottom: 1px dashed var(--border-subtle);
+  padding-bottom: var(--space-2);
+}
+
+/* Phone (<=720px, matches shared/useIsNarrow.ts): panes stack single-column;
+   the view renders list OR detail, never both. */
+@media (max-width: 720px) {
+  .session-panes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .session-master-col {
+    position: static;
+  }
+
+  .session-detail {
+    max-height: none;
+  }
+
+  /* Subagent rows: let descriptions wrap and drop the duration rail. */
+  .session-subagent-desc {
+    white-space: normal;
+  }
+
+  .session-subagent-dur {
+    display: none;
+  }
+}
+
+/* ---- session id + resume-in-CLI ---- */
+.session-detail-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+}
+
+/* One click selects the whole id. */
+.session-detail-id code {
+  user-select: all;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  background-color: color-mix(in srgb, var(--text-secondary) 10%, transparent);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-2);
+}
+
+.session-id-note {
+  color: var(--text-faint);
+}
+
+.session-detail-id .session-resume {
+  margin-left: auto;
+  font-size: var(--text-xs);
+}
+
+.session-detail-id .session-resume:disabled {
+  opacity: 0.45;
+}
+
+/* Delete-history sits after the resume button, which owns the margin-left:auto
+   — so both actions ride the right edge of the id row at the same size. */
+.session-detail-id .confirm-button {
+  font-size: var(--text-xs);
+}
+
+.session-detail-id .confirm-button:disabled {
+  opacity: 0.45;
+}

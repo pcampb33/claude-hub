@@ -1,0 +1,63 @@
+/* Charts shared by the Projects and Live widgets (board and peek). Class-
+   prefixed (hc-) rather than widget-scoped because both widgets' peeks use
+   them. Single hue: --accent marks, --text-faint muted, direct labels. */
+
+.hc-hero {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.hc-hero .sub {
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.hc-grid {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+}
+
+.hc-grid-dash {
+  stroke-dasharray: 4 4;
+  stroke: var(--border-default);
+}
+
+.hc-col,
+.hc-bar {
+  fill: var(--accent);
+}
+
+.hc-col-faded {
+  opacity: 0.5;
+}
+
+.hc-axis {
+  fill: var(--text-secondary);
+  font-size: 9.5px;
+  font-family: var(--font-mono);
+}
+
+.hc-label {
+  fill: var(--text-primary);
+  font-size: 11px;
+}
+
+.hc-value {
+  fill: var(--text-primary);
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+}
+
+.hc-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.hc-hit:hover {
+  fill: var(--accent-muted);
+}
+
+.hc-hit:focus-visible {
+  outline: 2px solid var(--accent);
+}

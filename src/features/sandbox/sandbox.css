@@ -1,0 +1,473 @@
+/* Center the header, its ⓘ subtitle, and the create form over the wide panes. */
+.sandbox-view .view-header,
+.sandbox-view .view-header-subtitle,
+.new-experiment-form {
+  max-width: var(--content-width-wide);
+  margin-inline: auto;
+}
+
+/* "+ New experiment" header toggle — the view's accent action. */
+.sandbox-new-toggle {
+  font-weight: 600;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  background-color: var(--accent-muted);
+}
+
+.sandbox-new-toggle:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+/* Collapsed behind "+ New experiment"; only rendered while open. */
+.new-experiment-form {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.new-experiment-form input {
+  flex: 1;
+}
+
+/* Master list (left) + wide detail pane (right), mirroring Workflows/Projects. */
+.experiment-panes {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+  max-width: var(--content-width-wide);
+  margin: 0 auto;
+}
+
+/* ---- master column ---- */
+.experiment-master-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: sticky;
+  top: var(--space-4);
+}
+
+.experiment-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.experiment-filter input {
+  flex: 1;
+  min-width: 0;
+}
+
+.experiment-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 0.1rem 0.55rem;
+}
+
+.experiment-master {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+
+.experiment-master-empty {
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ---- group headings ---- */
+/* Sticky inside the scrolling list so the count stays on screen while
+   scrolling past the sixteen folders that produced nothing. */
+.experiment-group-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--bg-inset);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
+
+.experiment-group-count {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--color-text-faint);
+}
+
+/* ---- master row ---- */
+.experiment-master-row {
+  display: flex;
+  flex-direction: column;
+  /* Chromium's UA stylesheet gives <button> align-items: flex-start, which
+     leaves each line content-sized — so text-overflow can never fire (the
+     element is exactly as wide as its text) and the overflow is hard-clipped
+     mid-word by the scroll container. Same trap and same fix as
+     .session-master-row. */
+  align-items: stretch;
+  gap: 3px;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.experiment-master-row:hover:not(.active) {
+  background-color: var(--color-surface-raised);
+}
+
+.experiment-master-row.active {
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+  box-shadow: inset 2px 0 0 var(--color-accent);
+}
+
+.experiment-master-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.experiment-master-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.experiment-master-row.active .experiment-master-name {
+  color: var(--color-accent);
+}
+
+/* Draft-in-progress spinner — shows on the row regardless of which experiment
+   is selected, since jobs are main-process state. */
+.experiment-row-spinner {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-muted);
+  border-top-color: var(--accent);
+  animation: sandbox-spin 0.7s linear infinite;
+}
+
+@keyframes sandbox-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.experiment-row-stale {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-warn);
+  border: 1px solid var(--color-warn);
+  border-radius: var(--radius-sm);
+  padding: 0 0.25rem;
+}
+
+.experiment-master-meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.experiment-master-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .experiment-row-spinner {
+    animation: none;
+  }
+}
+
+/* ---- skeletons (shimmer from the global .skeleton primitive) ---- */
+.experiment-row-skeleton {
+  height: 58px;
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.experiment-detail-skeleton {
+  height: 340px;
+  border-radius: var(--radius-md);
+}
+
+/* ---- detail pane ---- */
+.experiment-detail {
+  padding: var(--space-5) var(--space-6);
+}
+
+.experiment-detail-eyebrow {
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--color-text-faint);
+  overflow-wrap: break-word;
+  margin-bottom: var(--space-3);
+}
+
+.experiment-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.experiment-detail-headline {
+  flex: 1;
+  min-width: 0;
+}
+
+.experiment-detail-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.experiment-detail-name {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.experiment-detail-byline {
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+/* "learnings drafted" badge beside the title when LEARNINGS.md exists. */
+.learnings-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ok);
+  border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent);
+  background-color: color-mix(in srgb, var(--ok) 10%, transparent);
+  border-radius: var(--radius-pill);
+  padding: 0.05rem 0.5rem;
+  white-space: nowrap;
+}
+
+/* ---- header action cluster (ghosts + Queue-to-Inbox CTA + hint) ---- */
+.experiment-action-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.experiment-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ---- learnings body ---- */
+.experiment-detail-learnings {
+  margin-bottom: var(--space-4);
+}
+
+.experiment-learnings-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.experiment-detail-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+}
+
+.experiment-raw-toggle {
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.experiment-raw-toggle:hover {
+  color: var(--accent);
+}
+
+/* Rendered learnings — readable measure, internal scroll. */
+.experiment-learnings-scroll {
+  max-height: 560px;
+  max-width: 900px;
+  overflow: auto;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-5);
+}
+
+.experiment-learnings-prose {
+  max-width: 76ch;
+}
+
+.experiment-learnings-body {
+  max-height: 26rem;
+  overflow: auto;
+  margin: 0;
+  padding: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--color-text);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* An undrafted experiment used to leave the pane a title and one grey
+   sentence over ~600px of nothing — give the empty state the room instead. */
+.experiment-detail .empty-state {
+  min-height: 240px;
+  justify-content: center;
+  margin-inline: auto;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.experiment-detail .empty-state-hint {
+  max-width: 56ch;
+  line-height: 1.6;
+}
+
+/* ---- Queue-to-Inbox CTA (in the header action cluster) ---- */
+.experiment-queue {
+  font-weight: 600;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  background-color: var(--accent-muted);
+}
+
+.experiment-queue:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.experiment-queue:disabled {
+  opacity: 0.5;
+}
+
+.experiment-cta-hint {
+  max-width: 34ch;
+  text-align: right;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* ---- draft summary block (shown after a Draft Learnings run this session) ---- */
+.draft-summary {
+  background-color: var(--color-inset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.draft-summary-title {
+  display: block;
+}
+
+.draft-bullets {
+  margin: var(--space-2) 0 0;
+  padding-left: 1.2rem;
+}
+
+.draft-critical {
+  margin: var(--space-2) 0 0;
+  padding-left: 1.2rem;
+  color: var(--color-warn);
+}
+
+.draft-stats {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.stale-badge {
+  display: inline-block;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--color-warn);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-style: normal;
+  color: var(--color-warn);
+  white-space: nowrap;
+}
+
+/* Phone (≤720px, matches shared/useIsNarrow.ts): panes stack single-column;
+   the component renders list OR detail, never both. */
+@media (max-width: 720px) {
+  .experiment-panes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .experiment-detail {
+    padding: var(--space-4);
+  }
+
+  /* The action cluster wraps under the headline — align it left there. */
+  .experiment-action-cluster {
+    align-items: flex-start;
+  }
+
+  .experiment-cta-hint {
+    text-align: left;
+  }
+}

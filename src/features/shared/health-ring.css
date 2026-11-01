@@ -1,0 +1,30 @@
+.health-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.health-ring-track {
+  stroke: var(--border-subtle);
+}
+
+.health-ring-label {
+  position: absolute;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .health-ring-value {
+    animation: health-ring-draw var(--dur-slow) var(--ease-out);
+  }
+}
+
+@keyframes health-ring-draw {
+  from {
+    stroke-dashoffset: var(--ring-circumference);
+  }
+}

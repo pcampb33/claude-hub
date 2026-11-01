@@ -1,0 +1,119 @@
+/* Inbox triage: a card stack on the board, full entries in the peek. */
+
+[data-widget='inbox'] .ib-stack {
+  position: relative;
+}
+
+[data-widget='inbox'] .ib-card {
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* The cards behind are the same box, dropped and shrunk, so the stack's
+   depth reads as "more waiting" without any text. */
+[data-widget='inbox'] .ib-back,
+[data-widget='inbox'] .ib-back2 {
+  position: absolute;
+  inset: 0;
+}
+
+[data-widget='inbox'] .ib-back {
+  transform: translateY(8px) scale(0.95);
+  opacity: 0.6;
+}
+
+[data-widget='inbox'] .ib-back2 {
+  transform: translateY(16px) scale(0.9);
+  opacity: 0.3;
+}
+
+[data-widget='inbox'] .ib-top {
+  position: relative;
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  box-shadow: var(--card-shadow);
+}
+
+[data-widget='inbox'] .ib-hit {
+  display: grid;
+  gap: 4px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  min-width: 0;
+}
+
+[data-widget='inbox'] .ib-hit b {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+[data-widget='inbox'] .ib-meta {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+[data-widget='inbox'] .ib-why {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+[data-widget='inbox'] .ib-roomy .ib-why {
+  -webkit-line-clamp: 4;
+}
+
+[data-widget='inbox'] .ib-acts {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+[data-widget='inbox'] .ib-count {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+
+/* ---- peek ---- */
+
+.peek .ib-peek-title {
+  line-height: 1.35;
+}
+
+.peek .ib-preview summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--accent);
+}
+
+.peek .ib-preview[open] summary {
+  margin-bottom: var(--space-2);
+}
+
+.peek .ib-preview,
+.peek .ib-body {
+  min-width: 0;
+}
+
+.peek .ib-preview > :not(summary),
+.peek .ib-body {
+  background-color: var(--bg-inset);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  max-height: 220px;
+  overflow: auto;
+}

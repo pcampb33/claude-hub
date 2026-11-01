@@ -1,0 +1,165 @@
+/* Persistent 36px titlebar strip — a flex sibling ABOVE the scrolling content
+   div, never sticky inside it, so its drag rect can never go stale on scroll.
+   The whole bar is a native drag region; pills and the Ctrl K hint carve
+   themselves out as no-drag islands (rects combine in paint order). Mouse
+   events don't fire over the drag area itself, which is fine: everything
+   interactive is an island.
+
+   The right padding reserves the native overlay controls' footprint
+   (titleBarOverlay.height is set to 36 in electron/main.ts so the buttons
+   span exactly this bar): env(titlebar-area-*) yields the drawable area, so
+   viewport minus its right edge = overlay width. The var() fallbacks
+   evaluate to 0 where the env vars don't exist (plain browsers).
+
+   The ceiling is load-bearing, not decoration. The subtraction mixes two
+   widths that are normally equal but need not be: 100vw is the layout
+   viewport, env(titlebar-area-width) is the real window's drawable strip. Let
+   them disagree — an emulated viewport (Playwright's setViewportSize on an
+   800px window), a document scrollbar — and the difference is not the overlay
+   any more, it is the mismatch. Unclamped that reserved 838px of a 1424px bar
+   and squeezed the pill row down to a hard clip. Windows' three caption
+   buttons are 3x46px, macOS puts its lights on the left (calc yields ~0), so
+   160px is above every real answer and far below a runaway one. */
+.titlebar {
+  flex: none;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px;
+  -webkit-app-region: drag;
+  padding-right: clamp(
+    var(--space-4),
+    calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)),
+    160px
+  );
+}
+
+/* overflow: hidden is the last resort, not the plan — it is what stops the row
+   painting over the search trigger if the window is dragged absurdly narrow.
+   Everything below exists so it never actually has to fire: the row shrinks by
+   ellipsising names, not by cutting a pill in half. */
+.titlebar-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Shrinkable, unlike everything inside it. A pill that keeps its full width
+   while the row runs out of room does not stay whole — it gets sliced by the
+   row's clip, losing its gauge and its right border with no sign that anything
+   was cut. Yielding width instead costs an ellipsis, which at least says so. */
+.titlebar-pill {
+  -webkit-app-region: no-drag;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 24px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+button.titlebar-pill {
+  cursor: pointer;
+}
+
+button.titlebar-pill:hover {
+  border-color: var(--border-strong);
+  background-color: var(--bg-raised);
+}
+
+.titlebar-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .titlebar-pill-dot {
+    animation: titlebar-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes titlebar-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The one part of a pill that gives way. The dot, the elapsed counter and the
+   gauge are fixed-width facts that mean nothing half-drawn; a name is the only
+   thing here that survives being shortened, and the tooltip carries it in full.
+   The floor keeps an ellipsis plus a character or two rather than a bare "…". */
+.titlebar-pill-name {
+  color: var(--text-primary);
+  font-weight: 600;
+  min-width: 3ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titlebar-pill-elapsed {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  flex: none;
+}
+
+.titlebar-pill-gauge {
+  width: 40px;
+  height: 4px;
+  border-radius: 3px;
+  background-color: var(--bg-inset);
+  overflow: hidden;
+  flex: none;
+}
+
+.titlebar-pill-gauge-fill {
+  display: block;
+  height: 100%;
+  background-color: var(--accent);
+}
+
+.titlebar-gauge-warn {
+  background-color: var(--warn);
+}
+
+.titlebar-gauge-danger {
+  background-color: var(--danger);
+}
+
+/* The chip is the row's honesty: it is the only thing that says sessions exist
+   that you cannot see. It never shrinks, so it can never become the truncated
+   element and quietly under-report the count. */
+.titlebar-pill-more {
+  color: var(--text-faint);
+  background: none;
+  border-style: dashed;
+  flex: none;
+}
+
+.titlebar-idle {
+  padding: 0 12px;
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+

@@ -1,0 +1,213 @@
+.palette-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: var(--bg-overlay);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 14vh;
+}
+
+.palette-panel {
+  width: min(560px, calc(100vw - var(--space-6)));
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-3);
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .palette-panel {
+    animation: palette-enter var(--dur-base) var(--ease-out);
+  }
+}
+
+@keyframes palette-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The mode chip and the input share one row, so the row owns the left inset
+   and the rule under the search field; the input keeps the rest. */
+.palette-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.palette-mode-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  color: var(--accent);
+  background-color: var(--accent-muted);
+  border-radius: var(--radius-sm);
+  padding: 3px 4px 3px 8px;
+  white-space: nowrap;
+}
+
+.palette-mode-clear {
+  border: none;
+  background: none;
+  color: inherit;
+  opacity: 0.7;
+  font-size: var(--text-sm);
+  line-height: 1;
+  padding: 0 3px;
+  cursor: pointer;
+}
+
+.palette-mode-clear:hover {
+  opacity: 1;
+}
+
+.palette-panel [cmdk-input] {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: var(--text-md);
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: var(--space-4);
+  padding-left: 0;
+}
+
+.palette-panel [cmdk-input]::placeholder {
+  color: var(--text-faint);
+}
+
+.palette-panel [cmdk-list] {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.palette-panel [cmdk-empty] {
+  padding: var(--space-4);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+}
+
+.palette-panel [cmdk-group-heading] {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  padding: var(--space-2) var(--space-2) var(--space-1);
+}
+
+.palette-panel [cmdk-item] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.palette-panel [cmdk-item][data-selected='true'] {
+  background-color: var(--accent-muted);
+  color: var(--text-primary);
+}
+
+.palette-item-icon {
+  flex-shrink: 0;
+  color: var(--text-faint);
+}
+
+.palette-panel [cmdk-item][data-selected='true'] .palette-item-icon {
+  color: var(--accent);
+}
+
+.palette-item-kind {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.palette-item-action {
+  color: var(--text-faint);
+}
+
+/* Content results carry a second line (the transcript snippet), so the item
+   text becomes a column while .palette-item-kind stays pinned right. */
+.palette-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.palette-item-snippet {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.palette-item-hint {
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+/* The kind chip must not be squeezed out by a long note title. */
+.palette-item-kind {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* A corpus that failed to load renders as an absent group, which reads as
+   "nothing there". Say so instead. */
+.palette-degraded {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--warn);
+}
+
+/* Prefix legend, shown only on the empty mixed palette — a mode you cannot
+   discover is a mode nobody uses. */
+.palette-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-2) var(--space-4);
+}
+
+.palette-hint {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.palette-hint kbd {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  padding: 0 4px;
+}

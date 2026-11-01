@@ -1,0 +1,1004 @@
+/* The whole workspace claims the wide measure and centers — ancestor override
+   per the ViewHeader convention (the shared header owns its internals). */
+.project-list-view .view-header {
+  max-width: var(--content-width-wide);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Master list (left) + wide detail pane (right). */
+.project-panes {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+  max-width: var(--content-width-wide);
+  margin: 0 auto;
+}
+
+/* ---- Master column ---------------------------------------------------- */
+
+.project-master-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: sticky;
+  top: var(--space-4);
+}
+
+.project-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.project-filter input {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 0.1rem 0.55rem;
+}
+
+/* ---- Scope toggle (All | Needs attention) ------------------------------ */
+
+.project-scope {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.project-scope-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: var(--text-xs);
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.project-scope-btn:hover:not(.active) {
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.project-scope-btn.active {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background-color: var(--accent-muted);
+}
+
+.project-scope-warn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--warn);
+}
+
+.project-scope-count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.project-master {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+.project-master-empty {
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Compact 2-line triage row: git status rides the mark as a corner dot,
+   time right-aligned in mono, attention reason = warn/danger left tick. */
+.project-master-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  text-align: left;
+  padding: 7px var(--space-3) 7px 14px;
+  font-size: var(--text-sm);
+}
+
+.project-master-row:last-child {
+  border-bottom: none;
+}
+
+.project-master-row:hover:not(.active) {
+  background-color: var(--color-surface-raised);
+}
+
+.project-master-row.attn:not(.active)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--warn);
+}
+
+.project-master-row.attn.attn-danger:not(.active)::before {
+  background-color: var(--danger);
+}
+
+.project-master-row.active {
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+/* Selection wins the tick slot — same 3px bar, accent. */
+.project-master-row.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--color-accent);
+}
+
+.project-master-row.active .project-master-name {
+  color: var(--color-accent);
+}
+
+/* Wraps the shared ProjectMark so the git dot can sit on its corner. */
+.project-mark-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.git-dot {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+}
+
+.git-dot-dirty {
+  background-color: var(--warn);
+}
+
+.git-dot-clean {
+  background-color: var(--ok);
+}
+
+.git-dot-stale {
+  background-color: var(--warn);
+}
+
+.git-dot-no-git {
+  background-color: var(--border-strong);
+}
+
+.project-master-body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.project-master-name-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.project-master-name {
+  flex: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Line 2: latest-session title + right-aligned mono relative time. */
+.project-master-sub {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.project-master-latest {
+  flex: 1;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-master-when {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+
+/* ---- Config-health indicator (master row) ----------------------------- */
+
+.project-master-health {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  flex: 0 0 auto;
+  margin-left: var(--space-1);
+}
+
+.project-master-health-score {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.health-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.health-dot-ok {
+  background-color: var(--ok);
+}
+
+.health-dot-warn {
+  background-color: var(--warn);
+}
+
+.health-dot-danger {
+  background-color: var(--danger);
+}
+
+.health-dot-none {
+  background-color: var(--color-border);
+}
+
+/* ---- Sort control ----------------------------------------------------- */
+
+.project-sort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.project-sort-label {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  margin-right: var(--space-1);
+}
+
+.project-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  font-size: var(--text-xs);
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.project-sort-btn:hover:not(.active) {
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.project-sort-btn.active {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background-color: var(--accent-muted);
+}
+
+.project-sort-caret {
+  font-size: 0.6rem;
+  line-height: 1;
+}
+
+/* The direction finally says what it means ("worst first", "newest first"). */
+.project-sort-dir {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+/* ---- Skeletons -------------------------------------------------------- */
+
+.project-row-skeleton {
+  height: 52px;
+  border-radius: 0;
+}
+
+.project-detail-skeleton {
+  height: 320px;
+  border-radius: var(--radius-md);
+}
+
+/* Shimmer comes from the global .skeleton primitive in src/index.css. */
+
+/* ---- Detail pane ------------------------------------------------------ */
+
+/* The pane, not the viewport, decides whether the detail layout fits: in a
+   two-pane window the detail is only ~400px wide well above any phone
+   breakpoint. Query the pane itself (see the @container block below). */
+.project-detail {
+  padding: var(--space-5) var(--space-6);
+  container-type: inline-size;
+}
+
+.project-detail-eyebrow {
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--color-text-faint);
+  overflow-wrap: break-word;
+  margin-bottom: var(--space-3);
+}
+
+.project-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.project-detail-headline {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-detail-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.project-detail-name {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.branch-chip {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  background-color: var(--accent-muted);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-pill);
+  padding: 0.1rem 0.55rem;
+}
+
+/* One facts strip replaces the byline + StatCards + Repository card — every
+   fact stated exactly once. */
+.project-detail-facts {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: var(--space-5);
+  row-gap: var(--space-1);
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.fact b {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.fact-label {
+  color: var(--text-faint);
+}
+
+.project-detail-commit {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  min-width: 0;
+}
+
+.project-detail-commit-label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.project-detail-commit-msg {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-detail-ring {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 0 0 auto;
+}
+
+.project-detail-ring-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-detail-ring-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.project-detail-ring-sub {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.ring-sub-warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.ring-sub-info {
+  color: var(--info);
+  font-weight: 600;
+}
+
+/* Inline "view ↓" link down to the Findings card. */
+.ring-sub-view {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.ring-sub-view:hover {
+  color: var(--accent-hover);
+}
+
+.project-detail-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.project-detail-missing {
+  display: inline-block;
+}
+
+.project-card-excerpt {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-4);
+  font-style: italic;
+}
+
+/* ---- Action bar ------------------------------------------------------- */
+
+.launch-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.launch-actions .btn-ghost {
+  font-size: var(--text-sm);
+  padding: 0.5em 0.9em;
+  color: var(--text-primary);
+  border-color: var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.launch-actions .btn-ghost:hover:not(:disabled) {
+  border-color: var(--accent);
+  background-color: var(--accent-muted);
+  color: var(--accent-hover);
+}
+
+/* The single accent primary in the launch row. */
+.btn-launch-primary {
+  font-size: var(--text-sm);
+  padding: 0.5em 1.1em;
+  font-weight: 600;
+  color: var(--text-inverse);
+  background-color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.btn-launch-primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* ---- Detail columns --------------------------------------------------- */
+
+.project-detail-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.project-detail-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.project-detail-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ---- Verify-floor section (detail) ------------------------------------ */
+
+.project-detail-floor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.project-detail-floor-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Legend for ProjectFloorCard's day strip. The swatches deliberately reuse the
+   strip's own colour classes (floor.css) — duplicating the colours here would
+   let the key drift from the thing it explains. */
+.floor-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.floor-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.floor-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-sm);
+}
+
+.floor-legend-days {
+  color: var(--text-faint);
+}
+
+.project-detail-floor-empty {
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* ---- Recent sessions -------------------------------------------------- */
+
+.session-list-loading,
+.session-list-empty {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* WidgetCard renders this list with padding:false, so the shared error strip
+   has to take the gutter its sibling rows carry in their own padding. */
+.session-list > .error-notice,
+.session-row > .error-notice {
+  margin: var(--space-2) var(--space-3);
+}
+
+.session-row {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.session-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2) var(--space-3) 0;
+}
+
+.session-row:last-child {
+  border-bottom: none;
+}
+
+.session-row-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: inherit;
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.session-row-header:hover {
+  background-color: var(--color-surface-raised);
+}
+
+.session-row-caret {
+  color: var(--text-faint);
+  transition: transform var(--dur-base);
+  flex: 0 0 auto;
+}
+
+.session-row-caret.open {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+.session-row-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Stands in for a title the transcript never had — not a title itself. */
+.session-row-title.untitled {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.session-row-date {
+  color: var(--color-text-faint);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-xs);
+  flex: 0 0 auto;
+}
+
+.session-list-more {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--accent);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.session-list-more:hover {
+  background-color: var(--color-surface-raised);
+}
+
+/* ---- Findings (progressive disclosure) -------------------------------- */
+
+.config-health-panel {
+  font-size: var(--text-sm);
+}
+
+.config-health-status {
+  color: var(--color-text-secondary);
+  padding: var(--space-3) var(--space-4);
+}
+
+/* Severity rollup chips in the card header. */
+.config-health-chips {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.sev-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: 0.05rem 0.5rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.sev-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.sev-chip-warn {
+  color: var(--warn);
+  background-color: color-mix(in srgb, var(--warn) 12%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 32%, transparent);
+}
+
+.sev-chip-warn .sev-chip-dot {
+  background-color: var(--warn);
+}
+
+.sev-chip-info {
+  color: var(--info);
+  background-color: color-mix(in srgb, var(--info) 12%, transparent);
+  border-color: color-mix(in srgb, var(--info) 32%, transparent);
+}
+
+.sev-chip-info .sev-chip-dot {
+  background-color: var(--info);
+}
+
+/* Collapsed one-line rows expanding on select. Separators via adjacent
+   siblings so the last row never doubles up with the footnote's border-top. */
+.finding-row + .finding-row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.finding-row-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: inherit;
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.finding-row-head:hover {
+  background-color: var(--color-surface-raised);
+}
+
+.finding-caret {
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+  flex: 0 0 auto;
+  transition: transform var(--dur-base);
+}
+
+.finding-caret.open {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+/* Two lines per row: the identifying section heading gets a line of its own
+   (only the token count shares it), the rule's human phrasing sits under it. */
+.finding-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.finding-row-top,
+.finding-row-sub {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.finding-section {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* The rule's phrasing repeats verbatim down a whole severity group, so it is
+   context for the section above it, not a thing to scan. */
+.finding-kind {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+/* Marks rows whose finding lives in the global ~/.claude/CLAUDE.md. */
+.finding-src-chip {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--text-faint);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 0 0.45rem;
+}
+
+.finding-src-note {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+
+/* The differentiator between otherwise identical rows, so it reads at the
+   weight of the heading beside it rather than as meta. */
+.finding-tokens {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.finding-row-body {
+  padding: 0 var(--space-3) var(--space-3) calc(var(--space-3) + 18px);
+}
+
+/* Renders only inside the EXPANDED row body — the disclosure's whole point is
+   reading the evidence, so the excerpt wraps rather than clipping. */
+.finding-excerpt {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-2);
+  background-color: var(--bg-inset);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  overflow-wrap: anywhere;
+}
+
+.finding-detail {
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+}
+
+/* The action the rule implies — the detail above it is the evidence. */
+.finding-fix {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.finding-fix-label {
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-right: 0.45em;
+}
+
+.finding-cta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Inset group heading — severity groups and the cross-project overlap rows. */
+.config-health-group-head {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background-color: var(--bg-inset);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--space-1) var(--space-3);
+}
+
+/* The card header's own edge already draws this line. */
+.config-health-panel > .config-health-group-head:first-child {
+  border-top: none;
+}
+
+/* Carries the severity the rows below no longer repeat — and is the only
+   coloured band in the panel, so the actionable group is found, not hunted. */
+.config-health-group-warn {
+  color: var(--warn);
+  background-color: color-mix(in srgb, var(--warn) 10%, var(--bg-inset));
+}
+
+/* The MCP disclaimer, demoted to a faint footnote under the rows. */
+.config-health-note {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Phone (≤720px, matches shared/useIsNarrow.ts): panes stack single-column;
+   the component renders list OR detail, never both. */
+@media (max-width: 720px) {
+  .project-panes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-detail {
+    padding: var(--space-4);
+  }
+}
+
+/* Narrow pane, at any window size — two-pane windows put the detail well
+   under any phone breakpoint, so the pane has to answer for itself.
+
+   The side column's 280px floor leaves the main column too little to render
+   the floor card (its project name truncated to one letter at ~275px), so
+   stack the columns first, at 700px. */
+@container (max-width: 700px) {
+  .project-detail-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The header holds out longer: the ring (92px + its label) and Pin/Remove
+   are unshrinkable, and below ~620px the headline is left with nothing —
+   `min-width: 0` then lets the title overflow across the ring. */
+@container (max-width: 620px) {
+  /* Headline takes the full first row; the health ring and the Pin/Remove
+     actions wrap beneath it instead of crushing the name/byline. */
+  .project-detail-header {
+    flex-wrap: wrap;
+  }
+
+  .project-detail-headline {
+    flex: 1 1 100%;
+  }
+}

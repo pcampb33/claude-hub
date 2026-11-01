@@ -1,0 +1,77 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+dist-electron
+release
+*.local
+
+# Machine-specific registry of tracked project paths — not portable source
+registry.json
+
+# Machine-specific append-only ledger of verify runs — not portable source
+verify-ledger.jsonl
+
+# Machine-specific incremental index of skill-tool usage — not portable source
+skill-usage-index.json
+
+# Machine-specific cache of `claude plugin details` token costs — not portable source
+extensions-cache.json
+
+# Machine-specific window position/size — not portable source
+window-state.json
+
+# Local launch shortcuts — not portable source
+start.bat
+start-hidden.vbs
+
+# Stop-hook diagnostic log (see scripts/curate-session.mjs)
+scripts/curate-session.log
+# Per-session triage state: the message count at each session's last PAID
+# triage. Without it SessionEnd re-read sessions it had already paid for —
+# 717 of 1264 paid calls, $165 of $250.
+scripts/.curate-session-state/
+
+# Recall-hook diagnostic log + per-session state (see scripts/vault-recall.mjs)
+scripts/vault-recall.log
+scripts/.vault-recall-state/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.claude/worktrees/
+
+.playwright-mcp/
+
+# Generated feature dossiers (scripts/audit-dossiers.mjs). Regenerate rather
+# than track: a frozen copy belongs in the run's scratchpad, not in git.
+audit-dossiers/
+
+# Machine-specific incremental index of token usage per transcript — not portable source
+usage-index.json
+usage-index.json.tmp
+
+# Session Desktop: session records. The running host's pipe + token now live
+# in %LOCALAPPDATA%\claude-hub (electron/desktop-core.ts hostInfoPath); the
+# old in-repo location stays ignored in case a stale copy is left behind.
+desktop-sessions.json
+desktop-host.json
+
+# Session boundaries: each project's chosen tier, neighbours and vault access
+# (electron/project-config.ts). Machine-specific, like the registry.
+boundaries.json

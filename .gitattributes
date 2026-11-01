@@ -1,0 +1,14 @@
+# Workflow scripts are read from disk by the Claude Code Workflow tool, whose
+# permission handler rejects CRLF as hidden control characters — keep them LF
+# on checkout (core.autocrlf=true would otherwise convert them).
+.claude/workflows/*.js text eol=lf
+
+# Left out of the public export (scripts/export-public.mjs): working logs and
+# design prototypes that embed real session and project data.
+docs/loop-handoff.md export-ignore
+docs/loop-handoff-archive.md export-ignore
+docs/functionality-audit.md export-ignore
+docs/review-2026-10-21.md export-ignore
+docs/leverage-architecture.md export-ignore
+docs/dashboard-redesign.md export-ignore
+docs/redesign export-ignore

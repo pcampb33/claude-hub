@@ -1,0 +1,209 @@
+/* Master list (left) + detail pane (right) — the same shape Skills and
+   Workflows use. This view used to render all 54 commands at once in a
+   two-column masonry with no selection and no detail, which is the one place
+   in the app that taught a different pattern. */
+.commands-view .view-header,
+.commands-view .view-header-subtitle,
+.command-panes {
+  max-width: var(--content-width-wide);
+  margin-inline: auto;
+}
+
+.command-panes {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+/* ---- master column ---- */
+.command-master-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: sticky;
+  top: var(--space-4);
+}
+
+/* Filter, count pill, group heads and the bordered container come from the
+   shared list-shell primitives; only the height cap is view-specific. */
+.command-master {
+  max-height: calc(100vh - 160px);
+}
+
+.command-master-empty {
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Accent variant for the one group whose rows are read off disk rather than
+   from the curated table. */
+.command-group-live > .list-group-head {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-bottom-color: var(--accent-border);
+}
+
+.command-group-live > .list-group-head .list-group-count {
+  color: var(--accent);
+}
+
+/* ---- master row ----
+   Identical two-line anatomy in both halves. The old row gave live skills a
+   "used N×" meta column the built-ins could never have, so the two halves read
+   as different tables; the count now lives in the detail pane, which is the
+   only place it needs to be. */
+.command-master-row {
+  display: flex;
+  flex-direction: column;
+  /* Chromium's UA stylesheet gives <button> align-items: flex-start, which
+     sizes each line to its own text — text-overflow then never fires and the
+     description is hard-clipped mid-word by .list-rows instead. */
+  align-items: stretch;
+  gap: 2px;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.command-master-row:hover:not(.active) {
+  background-color: var(--color-surface-raised);
+}
+
+.command-master-row.active {
+  background-color: color-mix(in srgb, var(--accent) 15%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* nowrap because a hyphen is a line-break opportunity, so the default wrap
+   split names like /start-overnight-run across two lines mid-token. */
+.command-master-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-master-desc {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- detail pane ---- */
+.command-detail {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+}
+
+.command-detail-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.command-detail-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--accent);
+  margin: var(--space-2) 0 0;
+  overflow-wrap: anywhere;
+}
+
+.command-detail-usage {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  margin-top: var(--space-1);
+}
+
+/* Matches .skill-master-usage.unused — one fact, one treatment in both views. */
+.command-detail-usage.unused {
+  font-style: italic;
+}
+
+.command-detail-desc {
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: var(--space-4) 0 0;
+}
+
+.command-detail-desc.empty {
+  font-style: italic;
+  color: var(--text-faint);
+}
+
+/* Named action block, matching the Skills detail's footer: the buttons are
+   visible at rest and each carries its consequence. They used to be
+   display:none until :hover, so a cold read of the view offered no affordance
+   at all — you learned /doctor existed and had to leave the app to use it. */
+.command-use {
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.command-use-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.command-use-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.command-use-note {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Run ↗ — the accent primary of the pair (opens a session pre-filled; the
+   one-Enter gate is the safety). */
+.command-run {
+  color: var(--text-inverse);
+  background-color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.command-run:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* Phone (≤720px, matches shared/useIsNarrow.ts): panes stack single-column;
+   the view renders list OR detail, never both. */
+@media (max-width: 720px) {
+  .command-panes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .command-master-col {
+    position: static;
+  }
+
+  .command-detail {
+    padding: var(--space-4);
+  }
+}

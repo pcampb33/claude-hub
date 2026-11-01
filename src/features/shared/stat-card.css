@@ -1,0 +1,117 @@
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--card-shadow);
+  padding: var(--space-3) var(--space-4);
+}
+
+.stat-card-accent {
+  border-color: var(--accent-border);
+  background-color: var(--accent-muted);
+}
+
+.stat-card-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.stat-card-icon {
+  display: inline-flex;
+  color: var(--text-secondary);
+}
+
+.stat-card-value {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-card-accent .stat-card-value {
+  color: var(--accent);
+}
+
+.stat-card-sub {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+/* The "is that number good?" line. Sits directly under the value so the
+   reading arrives with the figure, not after a paragraph of context. */
+.stat-card-verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.stat-card-verdict-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background-color: currentcolor;
+  flex: none;
+}
+
+.stat-card-verdict.tone-ok {
+  color: var(--ok);
+}
+
+.stat-card-verdict.tone-warn {
+  color: var(--warn);
+}
+
+.stat-card-verdict.tone-danger {
+  color: var(--danger);
+}
+
+/* Not a shade of bad — a tile that could not measure. Reads as quiet and
+   uncoloured so it never competes with a real warning. */
+.stat-card-verdict.tone-unknown {
+  color: var(--text-faint);
+}
+
+.stat-card-verdict.tone-unknown .stat-card-verdict-dot {
+  background-color: transparent;
+  border: 1px solid var(--border-strong);
+}
+
+/* Deep-linking tile (rendered as a button): keep the card look, add a quiet
+   arrow that lights on hover. */
+.stat-card-link {
+  position: relative;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-base);
+}
+
+.stat-card-link:hover {
+  border-color: var(--border-strong);
+}
+
+.stat-card-go {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+  opacity: 0.6;
+}
+
+.stat-card-link:hover .stat-card-go {
+  color: var(--accent);
+  opacity: 1;
+}

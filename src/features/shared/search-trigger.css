@@ -1,0 +1,54 @@
+.search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  border: 1px solid var(--border-default);
+  border-radius: 5px;
+  background-color: var(--bg-inset);
+  padding: 2px 7px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.search-trigger:hover {
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+}
+
+.search-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.search-trigger-icon {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.search-trigger-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-trigger-kbd {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+/* In the titlebar: sits right of the live-session pills, must not be treated
+   as window-drag surface, and yields width to the pills when several run. */
+.search-trigger-titlebar {
+  -webkit-app-region: no-drag;
+  margin-left: auto;
+  margin-right: 10px;
+  width: min(320px, 34vw);
+}

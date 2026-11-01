@@ -1,0 +1,207 @@
+/* Live sessions: one row per running session (board), session peek. */
+
+[data-widget='live'] .live-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+[data-widget='live'] .lrow {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-raised);
+  cursor: pointer;
+}
+
+[data-widget='live'] .lrow:hover {
+  background-color: var(--accent-muted);
+}
+
+[data-widget='live'] .lrow h4 {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-widget='live'] .lrow-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  align-items: center;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+[data-widget='live'] .lrow-project {
+  color: var(--text-primary);
+}
+
+[data-widget='live'] .lrow-says {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-widget='live'] .lrow-ctx {
+  display: grid;
+  grid-template-columns: minmax(60px, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* The row is --bg-raised, which the shared track ground nearly matches. */
+[data-widget='live'] .lrow-ctx .track {
+  height: 6px;
+  background-color: var(--bg-base);
+}
+
+/* ---- activity ribbon (row and peek) ----
+   Segments abut in any order, so every pair must separate, not just
+   neighbours. The theme tokens are too pastel for that (Nord shell vs tools
+   ΔE 5.8), so the four timed kinds carry their own hues, validated all-pairs
+   with the dataviz checker against both dark themes and Clay: normal-vision
+   ΔE ≥ 17, protan/deutan ≥ 9.4. Waiting on you stays the theme's warn hue AND
+   hatched; background agents stay a faint neutral. */
+.rb {
+  --rb-thinking: #a658b7;
+  --rb-shell: #578ff3;
+  --rb-edit: #39a48c;
+  --rb-tools: #cd7a0e;
+}
+[data-theme='clay'] .rb {
+  --rb-thinking: #703989;
+  --rb-shell: #4d86e6;
+  --rb-edit: #008d75;
+  --rb-tools: #ff894f;
+}
+
+.ribbon {
+  display: flex;
+  height: 10px;
+  min-width: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background-color: var(--bg-base);
+}
+
+.ribbon-big {
+  height: 22px;
+  margin-top: 18px; /* room for the longest-wait label */
+  overflow: visible;
+}
+
+.rb {
+  position: relative;
+  flex: 0 1 0;
+  min-width: 0;
+}
+
+.rb-waiting {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--warn) 0 3px,
+    color-mix(in srgb, var(--warn) 40%, var(--bg-base)) 3px 5px
+  );
+}
+.rb-thinking {
+  background-color: var(--rb-thinking);
+}
+.rb-shell {
+  background-color: var(--rb-shell);
+}
+.rb-edit {
+  background-color: var(--rb-edit);
+}
+.rb-tools {
+  background-color: var(--rb-tools);
+}
+.rb-background {
+  background-color: color-mix(in srgb, var(--text-faint) 45%, var(--bg-base));
+}
+
+.rb-break {
+  flex: 0 0 10px;
+  display: block;
+  color: var(--text-faint);
+  background-color: var(--bg-surface);
+}
+.ribbon-big .rb-break {
+  flex-basis: 16px;
+}
+.rb-break svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.rb-break path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+/* The peek ribbon's longest wait: a bracket and a label above its segment. */
+.rb-lw {
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 0;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  padding-left: 4px;
+  border-left: 1px solid var(--warn);
+}
+.rb-lw-end {
+  left: auto;
+  right: 0;
+  padding: 0 4px 0 0;
+  border-left: 0;
+  border-right: 1px solid var(--warn);
+}
+
+.ribbon-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.live-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--space-3);
+  padding-top: 2px;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+.live-legend i {
+  display: inline-block;
+  width: 12px;
+  height: 8px;
+  margin-right: 5px;
+  border-radius: 2px;
+  vertical-align: baseline;
+}
+
+.peek-live {
+  display: contents;
+}
+
+.live-peek-title {
+  margin: 4px 0 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.3;
+}

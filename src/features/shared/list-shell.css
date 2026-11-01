@@ -1,0 +1,114 @@
+/* List-shell primitives (ListFilter / ListGroupHead / ListRows) — lifted from
+   the Skills master column so every list view shares one look. Row buttons
+   remain per-view. */
+
+.list-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.list-filter input {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-filter-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 0.1rem 0.55rem;
+}
+
+.list-rows {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+/* Inset mono group heading — a <button> when collapsible, a <div> when not;
+   both share the shape. box-sizing pinned because buttons default border-box
+   while divs default content-box — without it the div variant's width:100% +
+   padding overflows its container and clips the count pill. */
+.list-group-head {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  text-align: left;
+  padding: var(--space-1) var(--space-3);
+}
+
+button.list-group-head {
+  cursor: pointer;
+}
+
+button.list-group-head:hover {
+  color: var(--accent);
+}
+
+.list-group-caret {
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  transition: transform var(--dur-base);
+}
+
+.list-group-caret.open {
+  transform: rotate(90deg);
+}
+
+.list-group-name {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.list-group-count {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The "↑↓ move  ⏎ open" hint under a master list. One definition, because six
+   views now carry this strip: it started as knowledge's `.browse-foot`, and a
+   round of parallel agents produced three near-identical copies of it before
+   this consolidation. `list-hint-flush` is the variant that sits directly
+   under a bordered scroll box (knowledge) and needs a rule above it; the bare
+   class is for the columns that place it in their own flex gap, where a border
+   would read as a floating line. */
+.list-hint {
+  padding: 0 var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.list-hint-flush {
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.list-hint kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  border: 1px solid var(--border-default);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 5px;
+  background: var(--bg-inset);
+}

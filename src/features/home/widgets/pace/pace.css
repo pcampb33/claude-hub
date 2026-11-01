@@ -1,0 +1,132 @@
+/* Rate-limit pace: board widget and peek share the track and caption. */
+
+.pace-rows {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pace-row {
+  display: grid;
+  gap: 5px;
+  border-radius: var(--radius-sm);
+}
+
+.pace-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.pace-head span {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pace-head b {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.pace-track {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background-color: var(--border-subtle);
+}
+
+.pace-track i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+}
+
+.pace-used {
+  background-color: var(--accent);
+}
+
+.pace-proj {
+  background-color: color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.pace-tick {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background-color: var(--text-primary);
+}
+
+.pace-cap {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.pace-cap b {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.pace-note {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.pace-unavailable {
+  display: grid;
+  gap: 4px;
+  font-size: var(--text-sm);
+}
+
+.pace-unavailable b {
+  color: var(--text-primary);
+}
+
+.pace-unavailable span {
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.pace-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.pace-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 5px;
+  vertical-align: baseline;
+}
+
+.pace-legend .lg-used {
+  background-color: var(--accent);
+}
+
+.pace-legend .lg-proj {
+  background-color: color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.pace-legend .lg-tick {
+  width: 2px;
+  height: 10px;
+  background-color: var(--text-primary);
+}

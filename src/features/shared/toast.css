@@ -1,0 +1,49 @@
+.toast-host {
+  position: fixed;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 1000;
+  max-width: 360px;
+}
+
+.toast {
+  /* Raised card — matches --elev-2 in the new token layer. */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.toast-success {
+  border-left: 3px solid var(--color-ok);
+}
+
+.toast-error {
+  border-left: 3px solid var(--color-danger);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: toast-in var(--dur-base, 0.18s) ease-out;
+  }
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

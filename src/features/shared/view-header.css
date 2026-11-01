@@ -1,0 +1,60 @@
+/* ViewHeader internals — the .view-header container itself (flex, widths,
+   margins) is defined in index.css and per-view ancestor overrides. */
+
+.view-header-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* ⓘ subtitle toggle: quiet by default, accent when open. */
+.view-header-info {
+  border: none;
+  background: transparent;
+  padding: 0 var(--space-1);
+  font-size: var(--text-md);
+  line-height: 1;
+  color: var(--text-faint);
+  position: relative;
+}
+
+/* The glyph's own box is 22x14 — a fine mouse target and far below the ~44px
+   a thumb needs, on every view that has a subtitle. Expanding the hit area
+   with a pseudo-element rather than padding keeps the header row exactly
+   where it is on the desktop, where nothing was wrong with it. */
+.view-header-info::after {
+  content: '';
+  position: absolute;
+  inset: -15px -12px;
+}
+
+.view-header-info:hover:not(:disabled),
+.view-header-info.open {
+  color: var(--accent);
+}
+
+/* One-line explainer revealed by ⓘ — sits where the old always-visible view
+   hints did, so it inherits their width via the same per-view ancestor
+   overrides views already apply to .view-header. */
+.view-header-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-4);
+}
+
+.view-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* One height for every action: icon + label sit inline and never wrap (the
+   old headers let long labels fold buttons to two and three lines). */
+.view-header-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
