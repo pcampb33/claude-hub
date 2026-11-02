@@ -4,7 +4,7 @@ import { ErrorNotice } from '../shared/ErrorNotice'
 // Everything claude-hub has applied outside its own folder, in one card, so
 // none of it has to be remembered. Read from the real state on every load.
 export function Footprint({ footprint, hooks, scheduled }: { footprint: HubFootprint; hooks: number; scheduled: number }) {
-  const { scope, curate, recallOutside, denyRules, denyRulesError, folders } = footprint
+  const { scope, curate, recallOutside, denyRules, denyRulesError, folders, startMenuShortcut } = footprint
   return (
     <div className="card global-settings">
       {scope.error && <ErrorNotice message={`Hook scope: ${scope.error}. The hooks are running on the workspace alone.`} />}
@@ -48,6 +48,15 @@ export function Footprint({ footprint, hooks, scheduled }: { footprint: HubFootp
               {f.label} <code>{f.path}</code>
             </span>
           ))}
+        </dd>
+        <dt>Start Menu</dt>
+        <dd>
+          <code>{startMenuShortcut.path}</code>{' '}
+          {startMenuShortcut.present === null
+            ? "couldn't be checked"
+            : startMenuShortcut.present
+              ? 'starts the hub, and gives its taskbar button and notifications the claude-hub name and icon'
+              : 'is missing; the hub creates it on its next start'}
         </dd>
         <dt>Promoted skills</dt>
         <dd>

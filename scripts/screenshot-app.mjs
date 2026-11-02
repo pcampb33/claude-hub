@@ -14,8 +14,7 @@
 //   [outDir] defaults to <os-temp>/claude-hub-shots. It is created if absent.
 //   SHOT_THEMES=nord,catppuccin,clay shoots every view once per theme, as
 //   real-<view>-<theme>.png; unset, it shoots the app's saved theme only.
-//   Do NOT use `npm run build` — it also runs electron-builder (slow, unneeded
-//   for screenshots). Only `vite build` is required.
+//   Only `vite build` is required (`npm run build` also typechecks first).
 //
 // HOW IT WORKS:
 //   electron/main.ts loads the built renderer via loadFile(dist/index.html)

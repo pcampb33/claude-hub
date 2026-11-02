@@ -292,6 +292,9 @@ export interface HubFootprint {
   denyRules: { name: string; rules: number }[] | null
   denyRulesError: string | null
   folders: { label: string; path: string }[]
+  // The Start Menu shortcut carrying the app ID (electron/app-identity.ts).
+  // present null = couldn't check.
+  startMenuShortcut: { path: string; present: boolean | null }
 }
 
 export interface VaultNote {

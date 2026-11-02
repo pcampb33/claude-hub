@@ -1,5 +1,6 @@
-import { app, BrowserWindow, Menu } from 'electron'
+import { app, BrowserWindow, Menu, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
+import fs from 'node:fs'
 import path from 'node:path'
 import { registerAllIpcHandlers } from './ipc-handlers'
 import { initLiveStatus, disposeLiveStatus } from './live'
@@ -10,6 +11,7 @@ import { IPC_CHANNELS } from '../shared/ipc-types'
 import { loadWindowBounds, trackWindowBounds } from './window-state'
 import { DEFAULT_OVERLAY } from './window-theme'
 import { claimInstance, instancePipe } from './instance-lock'
+import { APP_ID, shortcutDetails, startMenuShortcutPath } from './app-identity'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -40,6 +42,10 @@ registerAllIpcHandlers()
 // menu entirely (not just autoHideMenuBar) means Alt doesn't reveal it either.
 Menu.setApplicationMenu(null)
 
+// The taskbar button and notifications belong to claude-hub, not Electron
+// (app-identity.ts). Set before any window exists.
+if (process.platform === 'win32') app.setAppUserModelId(APP_ID)
+
 let win: BrowserWindow | null
 
 // Push to the renderer only when the window is alive. On macOS the window can
@@ -69,7 +75,7 @@ function loadRenderer(target: BrowserWindow, hash?: string): void {
 function createWindow() {
   win = new BrowserWindow({
     ...(HIDDEN_WINDOW ? { width: 1500, height: 950, show: false, focusable: false, skipTaskbar: true } : loadWindowBounds()),
-    icon: path.join(process.env.VITE_PUBLIC, 'icon.png'),
+    icon: path.join(process.env.VITE_PUBLIC, 'icon.ico'),
     // Frameless with native Windows overlay controls. Starts in the default
     // theme's colours; the renderer recolours them to the saved theme on load
     // (window-theme.ts). Height matches the renderer's 36px titlebar strip
@@ -134,11 +140,22 @@ function comeForward(): void {
   win.focus()
 }
 
+// The Start Menu shortcut that carries APP_ID, created when missing. Never
+// replaced, so a hub started from a worktree can't repoint it.
+function ensureStartMenuShortcut(): void {
+  const lnk = startMenuShortcutPath()
+  if (fs.existsSync(lnk)) return
+  if (!shell.writeShortcutLink(lnk, 'create', shortcutDetails(process.env.APP_ROOT!))) {
+    console.error(`[claude-hub] Couldn't create the Start Menu shortcut ${lnk}`)
+  }
+}
+
 app.whenReady().then(async () => {
   if (process.env.CLAUDE_HUB_DESKTOP_PASSIVE !== '1') {
     const claim = await claimInstance(instancePipe(process.env.APP_ROOT!), comeForward)
     if (claim.kind === 'second') return app.exit(0)
     if (claim.kind === 'unknown') console.error(`[claude-hub] Couldn't check for another running hub, starting anyway: ${claim.error}`)
+    if (process.platform === 'win32' && !HIDDEN_WINDOW) ensureStartMenuShortcut()
   }
   createWindow()
 })

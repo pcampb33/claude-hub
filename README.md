@@ -99,6 +99,10 @@ npm install
 npm run dev
 ```
 
+It runs from its source folder; there is no installer. The hooks, the scheduled jobs and the app's
+own data all live in the repo, so a packaged copy would have none of them. On first start it adds a
+claude-hub shortcut to the Start Menu, which launches it without a console window and can be pinned.
+
 The vault defaults to `C:\projects\claude-hub-vault`; set `CLAUDE_HUB_VAULT` to put it elsewhere.
 The hooks and scheduled jobs are optional and registered by hand; `docs/automation.md` describes
 each one.

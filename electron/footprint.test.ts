@@ -68,3 +68,21 @@ test('getFootprint: lists projects outside the workspace and the hub-written den
     process.env.APP_ROOT = saved
   }
 })
+
+test('getFootprint: reports whether the Start Menu shortcut is there', () => {
+  const root = tmpRoot()
+  const saved = { APP_ROOT: process.env.APP_ROOT, APPDATA: process.env.APPDATA }
+  process.env.APP_ROOT = root
+  process.env.APPDATA = path.join(path.dirname(root), 'appdata')
+  try {
+    const missing = getFootprint(NOW).startMenuShortcut
+    assert.equal(missing.present, false)
+    assert.ok(missing.path.startsWith(process.env.APPDATA))
+    fs.mkdirSync(path.dirname(missing.path), { recursive: true })
+    fs.writeFileSync(missing.path, '')
+    assert.equal(getFootprint(NOW).startMenuShortcut.present, true)
+  } finally {
+    process.env.APP_ROOT = saved.APP_ROOT
+    process.env.APPDATA = saved.APPDATA
+  }
+})

@@ -29,10 +29,6 @@ extensions-cache.json
 # Machine-specific window position/size — not portable source
 window-state.json
 
-# Local launch shortcuts — not portable source
-start.bat
-start-hidden.vbs
-
 # Stop-hook diagnostic log (see scripts/curate-session.mjs)
 scripts/curate-session.log
 # Per-session triage state: the message count at each session's last PAID

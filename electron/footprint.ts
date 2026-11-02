@@ -11,6 +11,7 @@ import { listProjects, SANDBOX_PATH } from './registry.ts'
 import { VAULT_PATH } from './vault-core.ts'
 import { parseBoundaries } from './project-config-core.ts'
 import { parseLogStamp } from './job-freshness.ts'
+import { startMenuShortcutPath } from './app-identity.ts'
 import type { HubFootprint } from '../shared/ipc-types.ts'
 
 const DAY_MS = 864e5
@@ -69,6 +70,15 @@ export function getFootprint(now: number = Date.now()): HubFootprint {
     denyRulesError = `Couldn't read boundaries.json: ${(err as Error).message}`
   }
 
+  const shortcut = startMenuShortcutPath()
+  let shortcutPresent: boolean | null
+  try {
+    fs.statSync(shortcut)
+    shortcutPresent = true
+  } catch (err) {
+    shortcutPresent = (err as NodeJS.ErrnoException).code === 'ENOENT' ? false : null
+  }
+
   const localAppData = process.env.LOCALAPPDATA ?? path.join(os.homedir(), 'AppData', 'Local')
   return {
     scope: { workspace, outside, error: scope.error },
@@ -81,5 +91,6 @@ export function getFootprint(now: number = Date.now()): HubFootprint {
       { label: 'Sandbox', path: SANDBOX_PATH },
       { label: 'Session host', path: path.join(localAppData, 'claude-hub') },
     ],
+    startMenuShortcut: { path: shortcut, present: shortcutPresent },
   }
 }
