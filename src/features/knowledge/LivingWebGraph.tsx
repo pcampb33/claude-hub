@@ -4,6 +4,7 @@ import { nodeDegree } from '../../../shared/community'
 import { useTheme } from '../shared/theme'
 import { isLightColor, parseColor, projectColorMap, tintCluster } from './community'
 import { displayNoteTitle } from './note-title'
+import { physicsStep, type SimEdge, type SimNode } from './graph-physics'
 
 // The "living web": a continuous Canvas force-simulation of the vault. Alive at
 // rest (gentle drift + particles flowing along the links), legible on focus
@@ -12,32 +13,11 @@ import { displayNoteTitle } from './note-title'
 // sim sleeps its expensive physics once the layout settles and stops entirely
 // when the tab is backgrounded or reduced-motion is on, to keep idle CPU down.
 
-interface SimNode {
-  id: string
-  label: string
-  x: number
-  y: number
-  vx: number
-  vy: number
-  project: string // grouping key: the note's project, or NO_PROJECT for unprojected
-  color: string
-  degree: number
-  recency: number // 0..1, newest note = 1
-  radius: number
-  fixed: boolean // pinned while dragged
-}
-
 interface Derived {
   nodes: SimNode[]
-  edges: { source: string; target: string; weight: number }[]
+  edges: SimEdge[]
 }
 
-const REPULSION = 3000
-const SPRING_LENGTH = 70
-const SPRING_STRENGTH = 0.04
-const CLUSTER_GRAVITY = 0.02
-const CENTERING = 0.018
-const DAMPING = 0.9
 const ALPHA_DECAY = 0.985
 const ALPHA_SLEEP = 0.008 // below this the layout is "settled" — stop physics
 const ALPHA_WAKE = 0.7
@@ -314,83 +294,9 @@ export function LivingWebGraph({
     }
 
     const physics = () => {
-      const cx = width / 2
-      const cy = height / 2
-      // Project centroids for gentle same-project gravity.
-      const centroids = new Map<string, { x: number; y: number; n: number }>()
-      for (const n of sim.nodes) {
-        const c = centroids.get(n.project) ?? { x: 0, y: 0, n: 0 }
-        c.x += n.x
-        c.y += n.y
-        c.n++
-        centroids.set(n.project, c)
-      }
-      for (const [, c] of centroids) {
-        c.x /= c.n
-        c.y /= c.n
-      }
-
-      for (let i = 0; i < sim.nodes.length; i++) {
-        const a = sim.nodes[i]
-        for (let j = i + 1; j < sim.nodes.length; j++) {
-          const b = sim.nodes[j]
-          let dx = a.x - b.x
-          let dy = a.y - b.y
-          let distSq = dx * dx + dy * dy
-          if (distSq < 1) {
-            distSq = 1
-            dx = Math.cos(i * 12.9898 + j)
-            dy = Math.sin(i * 78.233 + j)
-          }
-          const force = REPULSION / distSq
-          const dist = Math.sqrt(distSq)
-          const fx = (dx / dist) * force
-          const fy = (dy / dist) * force
-          a.vx += fx * alpha
-          a.vy += fy * alpha
-          b.vx -= fx * alpha
-          b.vy -= fy * alpha
-        }
-      }
-      for (const e of sim.edges) {
-        const a = nodeById.get(e.source)
-        const b = nodeById.get(e.target)
-        if (!a || !b) continue
-        const dx = b.x - a.x
-        const dy = b.y - a.y
-        const dist = Math.max(Math.hypot(dx, dy), 1)
-        const force = (dist - SPRING_LENGTH) * SPRING_STRENGTH
-        const fx = (dx / dist) * force
-        const fy = (dy / dist) * force
-        a.vx += fx * alpha
-        a.vy += fy * alpha
-        b.vx -= fx * alpha
-        b.vy -= fy * alpha
-      }
-      for (const n of sim.nodes) {
-        const c = centroids.get(n.project)!
-        n.vx += (c.x - n.x) * CLUSTER_GRAVITY * alpha
-        n.vy += (c.y - n.y) * CLUSTER_GRAVITY * alpha
-        n.vx += (cx - n.x) * CENTERING * alpha
-        n.vy += (cy - n.y) * CENTERING * alpha
-      }
-      let energy = 0
-      for (const n of sim.nodes) {
-        if (n.fixed) {
-          n.vx = 0
-          n.vy = 0
-          continue
-        }
-        n.vx *= DAMPING
-        n.vy *= DAMPING
-        n.x += n.vx
-        n.y += n.vy
-        n.x = Math.max(n.radius + 4, Math.min(width - n.radius - 4, n.x))
-        n.y = Math.max(n.radius + 4, Math.min(height - n.radius - 4, n.y))
-        energy += n.vx * n.vx + n.vy * n.vy
-      }
+      const energy = physicsStep(sim.nodes, sim.edges, nodeById, width, height, alpha)
       alpha *= ALPHA_DECAY
-      return energy / sim.nodes.length
+      return energy
     }
 
     const draw = () => {
