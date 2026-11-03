@@ -79,7 +79,7 @@ function ProjectBody({ entry }: { entry: RegistryEntry }) {
   const fl = floor.status === 'data' ? floor.data.projects.find((p) => p.id === entry.id) : undefined
   const liveEntry = live.status === 'data' ? live.snapshot.projects.find((p) => p.registryId === entry.id) : undefined
   const sid = liveEntry?.sessionId
-  const running = liveEntry?.state === 'active'
+  const running = liveEntry?.state === 'active' || liveEntry?.state === 'waiting'
 
   const pending = (s: { status: string }) => (s.status === 'loading' ? '…' : '—')
   const sinceHours = last ? hoursSince(last.timestamp, now) : null

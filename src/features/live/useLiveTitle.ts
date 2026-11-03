@@ -11,8 +11,10 @@ export function useLiveTitle(): void {
 
   useEffect(() => {
     const active = snapshot?.projects.filter((p) => p.state === 'active').length ?? 0
+    const waiting = snapshot?.projects.filter((p) => p.state === 'waiting').length ?? 0
     // A null snapshot means "not loaded yet", not "nothing running" — leave the
     // plain title rather than announcing a zero the app has not established.
-    document.title = active > 0 ? `● ${active} running — ${BASE_TITLE}` : BASE_TITLE
+    const parts = [waiting > 0 && `${waiting} need${waiting === 1 ? 's' : ''} you`, active > 0 && `${active} running`].filter(Boolean)
+    document.title = parts.length > 0 ? `● ${parts.join(' · ')} — ${BASE_TITLE}` : BASE_TITLE
   }, [snapshot])
 }

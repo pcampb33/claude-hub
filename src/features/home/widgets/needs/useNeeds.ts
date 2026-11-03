@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useExtensionsRead, useFloorRead, useGlobalConfigRead, useInboxRead, useRecallRead } from '../../reads'
 import { useAllProjectsConfigHealth } from '../../../shared/useAllProjectsConfigHealth'
+import { useOnBoard } from '../../frame-context'
 import { buildNeeds, type HealthEntry, type NeedsSummary, type SourceKey, type SourceRead } from './needs-core'
 
 // One summary for the widget, its peek and the headline. The reads are
@@ -32,9 +33,10 @@ export function useNeeds(): NeedsSummary & { retry: (source: SourceKey) => void 
     return { status: 'data', data: fan.entries, error: null }
   }, [fan.error, fan.loading, fan.entries])
 
+  const inboxOnBoard = useOnBoard('inbox')
   const summary = useMemo(
-    () => buildNeeds({ inbox, automations, floors, health, extensions, recall }, Date.now()),
-    [inbox, automations, floors, health, extensions, recall],
+    () => buildNeeds({ inbox, automations, floors, health, extensions, recall }, Date.now(), { inboxOnBoard }),
+    [inbox, automations, floors, health, extensions, recall, inboxOnBoard],
   )
 
   const refreshFan = fan.refresh

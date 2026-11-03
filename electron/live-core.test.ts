@@ -15,6 +15,7 @@ import {
   readJsonlHead,
   readJsonlTail,
   readActivityTail,
+  sessionProcessLookup,
   type LiveSessionStatus,
 } from './live-core.ts'
 
@@ -377,4 +378,107 @@ test('the same hook failure is announced once, a later one again', () => {
 
   assert.deepEqual(notificationsFor(new Map([['p1', failedAt]]), statuses(failedAt), true), [])
   assert.equal(notificationsFor(new Map([['p1', failedAt]]), statuses(again), true).length, 1)
+})
+
+// ---- 'waiting': an open turn blocked on you --------------------------------
+//
+// Measured 2026-11-02 over 109 real sessions: every open turn that went quiet
+// past 5 minutes sat on an unanswered tool call, and each read 'ended' while
+// still holding its reader. That re-enabled Resume on a live session.
+
+const ago = (ms: number) => new Date(NOW - ms).toISOString()
+const MIN = 60_000
+const prompt = (ms: number) => JSON.stringify({ type: 'user', timestamp: ago(ms), message: { role: 'user', content: 'go' } })
+const toolCall = (ms: number, name: string, input: Record<string, unknown> = {}, id = 'tu1') =>
+  JSON.stringify({ type: 'assistant', timestamp: ago(ms), message: { content: [{ type: 'tool_use', id, name, input }] } })
+const toolResult = (ms: number, id = 'tu1') =>
+  JSON.stringify({ type: 'user', timestamp: ago(ms), message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: id, content: 'ok' }] } })
+const closeAt = (ms: number) => JSON.stringify({ type: 'system', subtype: 'turn_duration', timestamp: ago(ms) })
+const running = (status: 'busy' | 'idle' | 'waiting', waitingFor: string | null = null) => ({ kind: 'running' as const, status, waitingFor })
+
+test("Claude Code's record saying 'waiting' makes an open turn waiting, however long it has been quiet", () => {
+  const s = deriveLiveSessionStatus([prompt(61 * MIN), toolCall(60 * MIN, 'Bash', { command: 'ls' })], NOW, undefined, running('waiting', 'approve Bash: ls'))
+  assert.deepEqual([s.state, s.waitingFor], ['waiting', 'approve Bash: ls'])
+})
+
+test("a 'waiting' record over a closed turn is not a waiting turn (a dialog opened at the prompt)", () => {
+  const s = deriveLiveSessionStatus([prompt(2 * MIN), closeAt(MIN)], NOW, undefined, running('waiting', 'dialog open'))
+  assert.equal(s.state, 'idle')
+  assert.equal(s.waitingFor, undefined)
+})
+
+test("a 'busy' record keeps a 40-minute build active past the 5-minute window", () => {
+  const lines = [prompt(41 * MIN), toolCall(40 * MIN, 'Bash', { command: 'npm run build', timeout: 3_000_000 })]
+  assert.equal(deriveLiveSessionStatus(lines, NOW, undefined, running('busy')).state, 'active')
+})
+
+test('no live process: an unanswered question is not waiting on anyone', () => {
+  const lines = [prompt(11 * MIN), toolCall(10 * MIN, 'AskUserQuestion')]
+  assert.equal(deriveLiveSessionStatus(lines, NOW, undefined, { kind: 'none' }).state, 'ended')
+})
+
+test('records unreadable: an unanswered AskUserQuestion is waiting at once, and says the claim is inferred', () => {
+  const s = deriveLiveSessionStatus([prompt(2 * MIN), toolCall(MIN, 'AskUserQuestion')], NOW, undefined, { kind: 'unreadable' })
+  assert.equal(s.state, 'waiting')
+  assert.match(s.waitingFor ?? '', /from the transcript/)
+})
+
+test("records unreadable: a shell command is active inside its own timeout, then waiting (a permission prompt)", () => {
+  const lines = (quiet: number) => [prompt(quiet + MIN), toolCall(quiet, 'Bash', { command: 'make', timeout: 600_000 })]
+  // 10-minute timeout + the 5-minute window = still plausibly running at 14 minutes.
+  assert.equal(deriveLiveSessionStatus(lines(14 * MIN), NOW).state, 'active')
+  assert.equal(deriveLiveSessionStatus(lines(16 * MIN), NOW).state, 'waiting')
+  // No timeout given: the shell default (2 minutes) applies.
+  const bare = [prompt(9 * MIN), toolCall(8 * MIN, 'PowerShell', { command: 'ls' })]
+  assert.equal(deriveLiveSessionStatus(bare, NOW).state, 'waiting')
+})
+
+test('records unreadable: an answered tool call is not pending, and the fallback gives up after 24 hours', () => {
+  const answered = [prompt(12 * MIN), toolCall(11 * MIN, 'AskUserQuestion'), toolResult(10 * MIN)]
+  assert.equal(deriveLiveSessionStatus(answered, NOW).state, 'ended')
+  const stale = [prompt(25 * 60 * MIN), toolCall(25 * 60 * MIN, 'AskUserQuestion')]
+  assert.equal(deriveLiveSessionStatus(stale, NOW).state, 'ended')
+  // A closed turn clears whatever it left unanswered.
+  const closed = [prompt(12 * MIN), toolCall(11 * MIN, 'AskUserQuestion', {}, 'tu9'), closeAt(10 * MIN)]
+  assert.equal(deriveLiveSessionStatus(closed, NOW).state, 'ended')
+})
+
+test('sessionProcessLookup: a live record is running, a missing one none, a partial read proves nothing', () => {
+  const proc = { pid: 1, sessionId: 's1', cwd: 'C:/x', name: '', procStart: null, interactive: true, status: 'waiting' as const, waitingFor: 'input needed', updatedAtIso: null }
+  const ok = sessionProcessLookup({ ok: true, processes: [proc], error: null })
+  assert.deepEqual(ok('s1'), { kind: 'running', status: 'waiting', waitingFor: 'input needed' })
+  assert.deepEqual(ok('s2'), { kind: 'none' })
+  assert.deepEqual(sessionProcessLookup({ ok: true, processes: [proc], error: '1 record unreadable' })('s2'), { kind: 'unreadable' })
+  assert.deepEqual(sessionProcessLookup({ ok: false, error: 'no dir' })('s1'), { kind: 'unreadable' })
+})
+
+const WAITING: LiveSessionStatus = { state: 'waiting', aiTitle: 'Fix the flux capacitor', waitingFor: 'approve Bash: rm -rf build' }
+const withSession = (status: LiveSessionStatus, sessionId = 'sess-1') =>
+  new Map([['p1', { entry: { id: 'p1', name: 'claude-hub' }, status, sessionId }]])
+
+test('a turn coming to wait on you pings "needs you", not "Session ended"', () => {
+  assert.deepEqual(notificationsFor(new Map([['p1', ACTIVE]]), withSession(WAITING), false), [
+    { title: 'claude-hub needs you', body: 'approve Bash: rm -rf build' },
+  ])
+  assert.deepEqual(notificationsFor(new Map([['p1', ACTIVE]]), withSession(WAITING), true), [], 'you are already looking at it')
+  assert.deepEqual(notificationsFor(new Map([['p1', WAITING]]), withSession(WAITING), false), [], 'announced once')
+})
+
+test('a Desktop-run session is left to the Desktop, which sends its own "needs you"', () => {
+  assert.deepEqual(notificationsFor(new Map([['p1', ACTIVE]]), withSession(WAITING), false, new Set(['sess-1'])), [])
+})
+
+test('a waiting turn that then ends is a turn ending', () => {
+  assert.equal(notificationsFor(new Map([['p1', WAITING]]), withSession(IDLE), false)[0]?.title, 'Session ended — claude-hub')
+})
+
+test('a compaction summary, the /clear caveat and a local command are not activity', () => {
+  const idleAfter = (line: Record<string, unknown>) =>
+    deriveLiveSessionStatus([prompt(3 * MIN), closeAt(2 * MIN), JSON.stringify({ type: 'user', timestamp: ago(MIN), ...line })], NOW)
+  assert.equal(idleAfter({ isCompactSummary: true, message: { role: 'user', content: 'This session is being continued…' } }).state, 'idle')
+  assert.equal(idleAfter({ isMeta: true, message: { role: 'user', content: '<local-command-caveat>…' } }).state, 'idle')
+  assert.equal(idleAfter({ message: { role: 'user', content: '<command-name>/model</command-name>' } }).state, 'idle')
+  assert.equal(idleAfter({ message: { role: 'user', content: '<local-command-stdout>Set model</local-command-stdout>' } }).state, 'idle')
+  // A real prompt after the close still opens a turn.
+  assert.equal(idleAfter({ message: { role: 'user', content: 'now do the next thing' } }).state, 'active')
 })

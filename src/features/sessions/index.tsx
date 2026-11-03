@@ -18,11 +18,13 @@ import './sessions.css'
 
 // The row's second line answers "which window is this?" — project, model,
 // and what it is doing right now, in that order. Time and context % live in
-// the row's fixed right rail, so the scanned values never truncate.
+// the row's fixed right rail, so the scanned values never truncate. A session
+// waiting on you leads with that instead: last, it clipped to "needs yo…".
 function metaLine(entry: SessionListEntry): string {
   const parts = [entry.projectName]
   const model = realModel(entry.model)
   if (model) parts.push(model.replace(/^claude-/, ''))
+  if (entry.state === 'waiting') return [`needs you: ${entry.waitingFor ?? 'a prompt'}`, ...parts].join(' · ')
   if (entry.state === 'active') parts.push(entry.lastToolName ? `running ${toolLeaf(entry.lastToolName)}` : 'working')
   else parts.push(entry.state)
   return parts.join(' · ')

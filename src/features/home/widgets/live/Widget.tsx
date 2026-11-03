@@ -2,7 +2,7 @@ import { useWidgetMeta } from '../../frame-context'
 import { usePeekTarget } from '../../peek-context'
 import { Empty, Loading, StatePill, Track, Unreachable } from '../../parts'
 import { formatElapsed, formatTokens } from '../../../live/format'
-import { activitySentence, clockTime, liveMeta, liveSessions, modelLabel, sessionKey } from './live-core'
+import { activitySentence, blockedOn, clockTime, liveMeta, liveSessions, modelLabel, sessionKey, stateLabel } from './live-core'
 import { Ribbon, RibbonLegend } from './Ribbon'
 import { useLive, useNow } from './useLive'
 import type { LiveProjectStatus, SessionActivity } from '../../../../../shared/ipc-types'
@@ -33,22 +33,23 @@ export function LiveWidget() {
 
 function LiveRow({ s, now }: { s: LiveProjectStatus; now: number }) {
   const peekTarget = usePeekTarget()
-  const working = s.state === 'active'
+  const label = stateLabel(s)
   const model = modelLabel(s.model)
-  const title = s.aiTitle ?? 'Untitled session'
+  // Without an AI title the project is the session's name; "Untitled session" said nothing.
+  const title = s.aiTitle ?? s.name
   return (
-    <div className="lrow" {...peekTarget('live', { session: sessionKey(s) }, `${s.name}: ${title}, details`)}>
+    <div className="lrow" {...peekTarget('live', { session: sessionKey(s) }, s.aiTitle ? `${s.name}: ${s.aiTitle}, details` : `${s.name}, details`)}>
       <h4>{title}</h4>
       <div className="lrow-meta">
-        <StatePill tone={working ? 'ok' : 'warn'}>{working ? 'working' : 'idle'}</StatePill>
-        <span className="lrow-project">{s.name}</span>
+        <StatePill tone={label.tone}>{label.word}</StatePill>
+        {s.aiTitle && <span className="lrow-project">{s.name}</span>}
         {s.sessionStart && <span>· {formatElapsed(s.sessionStart, now)}</span>}
         {model && <span>· {model}</span>}
       </div>
       {s.activity ? (
         <>
           {s.activity.segments.length > 0 && <Ribbon a={s.activity} name={s.name} />}
-          <div className="lrow-says">{activitySentence(s.activity, clockTime)}</div>
+          <div className="lrow-says">{activitySentence(s.activity, clockTime, blockedOn(s))}</div>
         </>
       ) : (
         <div className="sub">

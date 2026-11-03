@@ -82,6 +82,25 @@ test('searchSessions prefers an ai-title line, matching the session list', async
   assert.equal(match.title, 'Fixture loader rewrite')
 })
 
+// Claude Code logs each request's composed user content (system reminders,
+// CLAUDE.md, the prompt again) as an api-request-blob line with role "user".
+// Before the skip, a phrase found only in the injected CLAUDE.md matched 50 of
+// the user's real sessions.
+test('searchSessions does not match text that only appears in an api-request-blob line', async () => {
+  const id = '55555555-0000-0000-0000-000000000001'
+  writeSession(id, [
+    userLine('cli', 'tidy the dock'),
+    JSON.stringify({
+      type: 'api-request-blob',
+      message: { role: 'user', content: [{ type: 'text', text: '<system-reminder>\nMinimum code that solves the problem.\n</system-reminder>\ntidy the dock' }] },
+    }),
+  ])
+
+  const ids = (await searchSessions('Minimum code that solves')).matches.map((m) => m.sessionId)
+  assert.ok(!ids.includes(id), 'injected harness text is not the conversation')
+  assert.ok((await searchSessions('tidy the dock')).matches.some((m) => m.sessionId === id), 'the real prompt is still found')
+})
+
 test('searchSessions ignores queries under the minimum length', async () => {
   const result = await searchSessions('li')
   assert.deepEqual(result.matches, [])

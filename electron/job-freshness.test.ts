@@ -114,6 +114,37 @@ test('a failed vault write is a failure despite the punctuation', () => {
   assert.equal(assessJob('drain', 'Drain', 'promote.log', 24, NOW).state, 'stale')
 })
 
+test('a run that finished but failed a promote mid-run is degraded, not green', () => {
+  // drain-inbox.mjs: a failed promote or vault commit is followed by a normal `done:`.
+  write(
+    'degraded.log',
+    [
+      '2026-08-22T10:00:00.000Z   promote FAILED, left queued: Older run (EPERM)',
+      '2026-08-22T10:00:01.000Z done: promoted 0, dropped 0, 1 entries remain queued. cost=$0.1000',
+      '2026-08-22T11:00:00.000Z start: 3 inbox entries, 40 vault notes',
+      '2026-08-22T11:00:05.000Z   PROMOTED A -> C:\\vault\\A.md (project hub; vault committed)',
+      '2026-08-22T11:00:06.000Z   vault commit FAILED after promoting B: index.lock exists',
+      '2026-08-22T11:00:07.000Z done: promoted 2, dropped 1, 0 entries remain queued. cost=$0.1200',
+    ].join('\n') + '\n',
+  )
+  const r = assessJob('drain', 'Drain', 'degraded.log', 24, NOW)
+  assert.equal(r.state, 'stale')
+  assert.match(r.detail, /^last run finished degraded — vault commit FAILED after promoting B/)
+})
+
+test("an earlier run's failure does not degrade a clean run after it", () => {
+  write(
+    'recovered.log',
+    [
+      '2026-08-21T11:00:00.000Z start: 2 inbox entries, 40 vault notes',
+      '2026-08-21T11:00:05.000Z   promote FAILED, left queued: A (EPERM)',
+      '2026-08-21T11:00:07.000Z done: promoted 0, dropped 1, 1 entries remain queued. cost=$0.1000',
+      '2026-08-22T11:00:00.000Z exit: inbox unchanged since last run — skipping LLM call',
+    ].join('\n') + '\n',
+  )
+  assert.equal(assessJob('drain', 'Drain', 'recovered.log', 24, NOW).state, 'current')
+})
+
 test('a paid link run that produced nothing usable is a failure', () => {
   // link-vault.mjs:73 — the sidecar is left untouched after a sonnet call.
   write('noedges.log', '2026-08-22T11:00:00.000Z model proposed no valid edges (cost=$0.4210); leaving sidecar untouched\n')
@@ -278,6 +309,6 @@ test('the 7-day ceiling: the incident week breaches it, a normal week does not',
   assert.equal(spendBreach(spend(20)), null)
   assert.equal(
     spendBreach(spend(81.2, 3)),
-    'spent $81.20 in 7 days plus 3 run(s) of unknown cost (ceiling $20) — normal is under $10',
+    'spent $81.20 in 7 days plus 3 run(s) of unknown cost (ceiling $20) — normal is under $10; last 24h $0.00',
   )
 })

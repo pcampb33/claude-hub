@@ -39,6 +39,7 @@ const config = (states: ('ok' | 'attention' | 'unknown')[], schedulerError: stri
     command: '',
     state,
     detail: `detail ${i}`,
+    overBudget: false,
     lastRunIso: null,
     warnings: [],
     taskName: null,
@@ -201,6 +202,20 @@ test('items are counted and ranked: broken first, then waiting, then unknown', (
   assert.deepEqual(h.peek, { widget: 'projects', ctx: { project: 'h0' } })
   assert.deepEqual(s.items.find((i) => i.key === 'automation:a1')!.peek, { widget: 'automation', ctx: { item: 'a1' } })
   assert.deepEqual(headlineParts(s), { em: '7 things', rest: ' need you', note: null })
+})
+
+test('with the Inbox widget on the board the inbox is left to it, but a loading inbox still never reads as zero', () => {
+  const on = { inboxOnBoard: true }
+  assert.deepEqual(buildNeeds({ ...quiet(), inbox: data(inbox(5)) }, NOW, on).items, [])
+  assert.equal(buildNeeds({ ...quiet(), inbox: data(inbox(5)) }, NOW).items[0]?.key, 'inbox')
+  assert.deepEqual(buildNeeds({ ...quiet(), inbox: loading }, NOW, on).pending, ['inbox'])
+})
+
+test('an over-budget job is titled by its spend, not as "isn’t doing its job"', () => {
+  const report = config(['attention', 'attention'])
+  report.automations[0] = { ...report.automations[0], label: 'Curate hook (SessionEnd)', overBudget: true }
+  const titles = buildNeeds({ ...quiet(), automations: data(report) }, NOW).items.map((i) => i.title)
+  assert.deepEqual(titles, ['Curate hook (SessionEnd) is over its spend ceiling', 'Job 1 isn’t doing its job'])
 })
 
 test('a stale or never-run floor is flagged; a green one and an unconfigured one are not', () => {

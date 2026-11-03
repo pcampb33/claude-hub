@@ -47,6 +47,7 @@ import {
   isUuid,
   killTree,
   parseClaudeRecord,
+  pidAlive,
   queryProcess,
   readClaudeProcesses,
   resolveTargetIn,
@@ -258,15 +259,6 @@ function readHostInfo(): InfoRead {
 function removeStaleInfo(stale: HostInfo): void {
   const now = readHostInfo()
   if (now.kind === 'ok' && now.info.pid === stale.pid && now.info.pipe === stale.pipe) fs.rmSync(hostInfoPath(), { force: true })
-}
-
-function pidAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch (err) {
-    return (err as NodeJS.ErrnoException).code === 'EPERM'
-  }
 }
 
 let config: { hostScript: string; execPath: string } | null = null
@@ -692,6 +684,7 @@ function toSession(record: DesktopRecord, ctx: SnapshotContext): DesktopSession 
     prompt: onScreen?.prompting ? { line: onScreen.line } : null,
     transcript: readTranscript(record, targetFolder(record.target, ctx.places), ctx.cache),
     claudeStatus: claude?.status ?? null,
+    claudeWaitingFor: claude?.waitingFor ?? null,
   })
   return { ...record, targetName: targetName(record.target, ctx.places), poppedOut: popped.has(record.id), tier: record.tier ?? null, alive, ...derived }
 }

@@ -63,8 +63,13 @@ function doing(now: ActivityNow): string {
 // The one line under a live row's ribbon: what it is doing now, the edits so
 // far, and how long it has waited on you (dropped while it IS waiting — the
 // first clause already says so).
-export function activitySentence(a: SessionActivity, clock: (ms: number) => string): string {
+//
+// `blockedOn` is set when the session's own record says it sits on a dialog
+// (LiveProjectStatus.state 'waiting'). The timeline can't see a dialog: mid-
+// turn it still reads "Thinking", so the record wins.
+export function activitySentence(a: SessionActivity, clock: (ms: number) => string, blockedOn: string | null = null): string {
   const edits = a.editsCount === 0 ? 'no edits yet' : `${plural(a.editsCount, 'edit', 'edits')} in ${plural(a.filesEdited, 'file', 'files')}`
+  if (blockedOn !== null) return [blockedOn ? `Waiting on you: ${blockedOn}` : 'Waiting on you', edits].join(' · ')
   if (!a.now) return edits
   if (a.now.state === 'waiting') return [`Turn over — waiting on you since ${clock(a.now.sinceMs)}`, edits].join(' · ')
   return [doing(a.now), edits, `waited on you ${formatSpan(a.waitedMs)}`].join(' · ')
@@ -82,13 +87,26 @@ export function whereTimeWent(a: SessionActivity): string {
   return parts.length ? parts.join(' · ') : 'no time recorded yet'
 }
 
-// Running sessions only (ended ones belong to the Sessions view), working
-// before idle, most recent first.
+// Running sessions only (ended ones belong to the Sessions view): waiting on
+// you first, then working, then idle, most recent first within each.
+const STATE_ORDER: Record<LiveProjectStatus['state'], number> = { waiting: 0, active: 1, idle: 2, ended: 3 }
+
 export function liveSessions(snapshot: LiveStatusSnapshot): LiveProjectStatus[] {
   return snapshot.projects
     .filter((p) => p.state !== 'ended')
-    .sort((a, b) => (a.state === b.state ? (b.lastTimestamp ?? '').localeCompare(a.lastTimestamp ?? '') : a.state === 'active' ? -1 : 1))
+    .sort((a, b) => STATE_ORDER[a.state] - STATE_ORDER[b.state] || (b.lastTimestamp ?? '').localeCompare(a.lastTimestamp ?? ''))
 }
+
+// The pill word and tone for a live session.
+export function stateLabel(s: LiveProjectStatus): { word: string; tone: 'ok' | 'warn' | 'danger' } {
+  if (s.state === 'waiting') return { word: 'needs you', tone: 'danger' }
+  if (s.state === 'active') return { word: 'working', tone: 'ok' }
+  return { word: 'idle', tone: 'warn' }
+}
+
+// activitySentence's blockedOn for a session: what it waits on while its
+// record says 'waiting' ('' when the record doesn't name it), else null.
+export const blockedOn = (s: LiveProjectStatus): string | null => (s.state === 'waiting' ? (s.waitingFor ?? '') : null)
 
 // The peek is scoped by session id; a transcript without one (cannot happen
 // for a live session, but the field is optional) falls back to the project.
@@ -129,7 +147,10 @@ export function modelLabel(model: string | undefined): string | null {
 
 export function liveMeta(sessions: LiveProjectStatus[]): string | null {
   if (sessions.length === 0) return null
+  const waiting = sessions.filter((s) => s.state === 'waiting').length
   const working = sessions.filter((s) => s.state === 'active').length
-  const idle = sessions.length - working
-  return [working > 0 ? `${working} working` : null, idle > 0 ? `${idle} idle` : null].filter(Boolean).join(' · ')
+  const idle = sessions.length - working - waiting
+  return [waiting > 0 ? `${waiting} need${waiting === 1 ? 's' : ''} you` : null, working > 0 ? `${working} working` : null, idle > 0 ? `${idle} idle` : null]
+    .filter(Boolean)
+    .join(' · ')
 }

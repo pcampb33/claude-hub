@@ -230,6 +230,8 @@ function withSpend(graded: { state: GlobalItemState; detail: string }, job: JobF
   return { state: 'attention' as const, detail: `${breach}; ${graded.detail}` }
 }
 
+const overBudget = (job: JobFreshness | undefined) => spendBreach(job?.spend ?? null) !== null
+
 // Human trigger text from the task's own schedule. Task Scheduler's trigger
 // objects don't survive the pipe-delimited query, so this reads the next run
 // rather than inventing a cadence it did not check.
@@ -345,6 +347,7 @@ export function hookAutomations(file: string, byId: Map<string, JobFreshness>): 
         trigger: 'settings.json',
         command: '',
         state: 'unknown',
+        overBudget: false,
         detail: `could not read ${file}: ${why} — which hooks are registered, and whether any run, is unknown`,
         lastRunIso: null,
         warnings: [],
@@ -377,6 +380,7 @@ export function hookAutomations(file: string, byId: Map<string, JobFreshness>): 
       command: hook.command,
       state,
       detail,
+      overBudget: overBudget(job),
       lastRunIso: job?.lastRunIso ?? null,
       warnings: [],
       taskName: null,
@@ -409,6 +413,7 @@ export function scheduledAutomations(
       command: '',
       state,
       detail,
+      overBudget: overBudget(probe),
       lastRunIso: row.lastRunIso,
       warnings: [
         ...scheduledWarnings(row),
@@ -438,6 +443,7 @@ export function scheduledAutomations(
       command: '',
       state,
       detail: `${why}; ${graded.detail}`,
+      overBudget: overBudget(probe),
       lastRunIso: probe?.lastRunIso ?? null,
       warnings: [],
       taskName: null,

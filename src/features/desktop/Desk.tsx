@@ -13,6 +13,17 @@ import { outsideKey } from './layout-model'
 import { useStage } from './useStage'
 
 
+// Hiding the dock is a per-viewer convenience: kept across launches when storage works, harmless when it doesn't.
+const DOCK_HIDDEN_KEY = 'claude-hub:desk-dock-hidden'
+
+function readDockHidden(): boolean {
+  try {
+    return localStorage.getItem(DOCK_HIDDEN_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
 function useNowMs(intervalMs = 30_000): number {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -29,6 +40,14 @@ export function Desk({ snapshot, onRetry }: { snapshot: DesktopSnapshot; onRetry
   const { pick, replace } = stage
   const [launcherOpen, setLauncherOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [dockHidden, setDockHidden] = useState(readDockHidden)
+  useEffect(() => {
+    try {
+      localStorage.setItem(DOCK_HIDDEN_KEY, dockHidden ? '1' : '0')
+    } catch {
+      // Not persisted; the choice holds until relaunch.
+    }
+  }, [dockHidden])
 
   // The last record seen for each outside session, so a read-only view keeps
   // its folder and name through a moment when the list can't be read.
@@ -151,6 +170,8 @@ export function Desk({ snapshot, onRetry }: { snapshot: DesktopSnapshot; onRetry
         hostStarting={host.state === 'starting'}
         layout={stage.layout}
         onLayout={stage.setLayout}
+        dockHidden={dockHidden}
+        onToggleDock={() => setDockHidden((h) => !h)}
         onNewSession={() => setLauncherOpen(true)}
       />
       {hostDown && !empty && (
@@ -189,16 +210,18 @@ export function Desk({ snapshot, onRetry }: { snapshot: DesktopSnapshot; onRetry
           </div>
         </div>
       ) : (
-        <div className="desk-body">
-          <Dock
-            sessions={sessions}
-            outside={outside}
-            focusedId={stage.focusedId}
-            onStage={stage.onStage}
-            nowMs={nowMs}
-            onPick={focusSession}
-            onPickOutside={(sid) => pick(outsideKey(sid))}
-          />
+        <div className={`desk-body${dockHidden ? ' dock-hidden' : ''}`}>
+          {!dockHidden && (
+            <Dock
+              sessions={sessions}
+              outside={outside}
+              focusedId={stage.focusedId}
+              onStage={stage.onStage}
+              nowMs={nowMs}
+              onPick={focusSession}
+              onPickOutside={(sid) => pick(outsideKey(sid))}
+            />
+          )}
           <Stage stage={stage} sessions={sessions} nowMs={nowMs} outside={outsideViews} />
         </div>
       )}

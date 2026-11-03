@@ -11,6 +11,7 @@ import path from 'node:path'
 import { listProjects } from './registry.ts'
 import { findSessionDirs } from './status.ts'
 import { pruneActivityCache, readSessionActivity } from './session-activity-core.ts'
+import { claudeSessionsDir, pidAlive, readClaudeProcesses, type ClaudeProcess, type ClaudeProcessRead } from './desktop-outside.ts'
 import type {
   LiveProjectStatus,
   LiveSessionState,
@@ -124,6 +125,7 @@ export function contextLimitFor(model: string | undefined): number {
 export interface LiveSessionStatus {
   state: LiveSessionState
   lastToolName?: string
+  waitingFor?: string
   lastTimestamp?: string
   // Timestamp of the newest user/assistant line — the only thing that means
   // "someone was here"; system/bookkeeping lines never advance it.
@@ -150,6 +152,8 @@ interface RawLine {
   timestamp?: string
   aiTitle?: string
   hookErrors?: unknown[]
+  isMeta?: boolean
+  isCompactSummary?: boolean
   message?: {
     id?: string
     model?: string
@@ -178,7 +182,58 @@ function parseLines(lines: string[]): RawLine[] {
   return parsed
 }
 
-export function deriveLiveSessionStatus(tailLines: string[], nowMs: number, sessionStart?: string): LiveSessionStatus {
+// User lines nobody typed to the model: the /clear caveat (isMeta), a
+// compaction summary, and a local command with its output. None is a turn,
+// so none closes with turn_duration. Counted as activity, each held an idle
+// session 'active' for 5 minutes (39 times, 2026-09-01..11-02).
+function isActivity(line: RawLine): boolean {
+  if (line.type === 'assistant') return true
+  if (line.type !== 'user' || line.isMeta || line.isCompactSummary) return false
+  const content = line.message?.content
+  return !(typeof content === 'string' && /^<(command-name|local-command-)/.test(content))
+}
+
+// What Claude Code's own per-process record (~/.claude/sessions/<pid>.json)
+// says about the process holding a session. 'none' = no live process holds
+// it; 'unreadable' = the records couldn't all be read, so absence proves
+// nothing and the transcript has to stand in.
+export type SessionProcess =
+  | { kind: 'running'; status: ClaudeProcess['status']; waitingFor: string | null }
+  | { kind: 'none' }
+  | { kind: 'unreadable' }
+
+export function sessionProcessLookup(read: ClaudeProcessRead): (sessionId: string) => SessionProcess {
+  if (!read.ok || read.error) return () => ({ kind: 'unreadable' })
+  const bySession = new Map(read.processes.map((p) => [p.sessionId, p]))
+  return (sessionId) => {
+    const p = bySession.get(sessionId)
+    return p ? { kind: 'running', status: p.status, waitingFor: p.waitingFor } : { kind: 'none' }
+  }
+}
+
+export const readSessionProcesses = () => sessionProcessLookup(readClaudeProcesses(claudeSessionsDir(), pidAlive))
+
+// Transcript-only fallback, used only when the process records can't be read.
+// Measured over 109 real sessions (2026-09-01..11-02): every open turn that
+// went quiet past 5 minutes sat on an unanswered tool call, either
+// AskUserQuestion (18), a shell command still inside its own timeout (~22), or
+// one past it, i.e. a permission prompt (~5). Never on the model thinking.
+// A dead process looks the same as a waiting one here, hence the cap.
+export const FALLBACK_WAIT_CAP_MS = 24 * 60 * 60 * 1000
+const SHELL_DEFAULT_TIMEOUT_MS = 120_000
+
+function toolTimeoutMs(block: { name?: string; input?: { timeout?: unknown } }): number {
+  if (block.name !== 'Bash' && block.name !== 'PowerShell') return 0
+  const t = block.input?.timeout
+  return typeof t === 'number' && Number.isFinite(t) && t > 0 ? t : SHELL_DEFAULT_TIMEOUT_MS
+}
+
+export function deriveLiveSessionStatus(
+  tailLines: string[],
+  nowMs: number,
+  sessionStart?: string,
+  proc: SessionProcess = { kind: 'unreadable' },
+): LiveSessionStatus {
   const parsed = parseLines(tailLines)
   const status: LiveSessionStatus = { state: 'ended', sessionStart }
 
@@ -186,15 +241,31 @@ export function deriveLiveSessionStatus(tailLines: string[], nowMs: number, sess
   let lastTurnCloseIndex = -1
   const turns: RecentTurn[] = []
   let lastTurnId: string | undefined
+  // Tool calls of the open turn with no tool_result yet, by tool_use id.
+  const pending = new Map<string, { name: string; timeoutMs: number }>()
 
   parsed.forEach((line, i) => {
     if (typeof line.timestamp === 'string') status.lastTimestamp = line.timestamp
-    if (line.type === 'user' || line.type === 'assistant') {
+    if (isActivity(line)) {
       lastActivityIndex = i
       if (typeof line.timestamp === 'string') status.lastActivityAt = line.timestamp
     }
+    const content = line.message?.content
+    if (line.type === 'user' && Array.isArray(content)) {
+      for (const block of content as { type?: string; tool_use_id?: string }[]) {
+        if (block.type === 'tool_result' && typeof block.tool_use_id === 'string') pending.delete(block.tool_use_id)
+      }
+    }
+    if (line.type === 'assistant' && Array.isArray(content)) {
+      for (const block of content as { type?: string; id?: string; name?: string; input?: { timeout?: unknown } }[]) {
+        if (block.type === 'tool_use' && typeof block.id === 'string') {
+          pending.set(block.id, { name: block.name ?? 'a tool', timeoutMs: toolTimeoutMs(block) })
+        }
+      }
+    }
     if (line.type === 'system' && (line.subtype === 'turn_duration' || line.subtype === 'stop_hook_summary')) {
       lastTurnCloseIndex = i
+      pending.clear()
       if (line.subtype === 'stop_hook_summary' && Array.isArray(line.hookErrors) && line.hookErrors.length > 0) {
         status.latestHookErrorAt = typeof line.timestamp === 'string' ? line.timestamp : ''
       }
@@ -253,6 +324,34 @@ export function deriveLiveSessionStatus(tailLines: string[], nowMs: number, sess
   const recent = Number.isFinite(activityMs) && nowMs - activityMs < ACTIVE_WINDOW_MS
   const turnClosed = lastTurnCloseIndex > lastActivityIndex
   status.state = !recent ? 'ended' : turnClosed ? 'idle' : 'active'
+  if (turnClosed || lastActivityIndex < 0) return status
+
+  // The turn is open. Claude Code's own record outranks five minutes of
+  // transcript silence: 'waiting' while a dialog blocks the turn, 'busy'
+  // through a 40-minute build. Its other statuses (idle after an Esc, say)
+  // leave the transcript's answer standing. No live process: never waiting.
+  if (proc.kind === 'running') {
+    if (proc.status === 'waiting') {
+      status.state = 'waiting'
+      status.waitingFor = proc.waitingFor ?? 'a prompt'
+    } else if (proc.status === 'busy') {
+      status.state = 'active'
+    }
+  } else if (proc.kind === 'unreadable' && pending.size > 0) {
+    const quietMs = nowMs - activityMs
+    if (quietMs < FALLBACK_WAIT_CAP_MS) {
+      const tools = [...pending.values()]
+      const question = tools.find((t) => t.name === 'AskUserQuestion')
+      const deadline = Math.max(...tools.map((t) => t.timeoutMs)) + ACTIVE_WINDOW_MS
+      if (question || quietMs > deadline) {
+        status.state = 'waiting'
+        // Inferred, and it says so: the same transcript fits a process that died.
+        status.waitingFor = `${question ? 'an answer' : `approval for ${tools[0].name}?`} (from the transcript; the session records couldn't be read)`
+      } else {
+        status.state = 'active'
+      }
+    }
+  }
   return status
 }
 
@@ -337,13 +436,14 @@ export function computeStatuses(): Map<string, ProjectLiveStatus> {
   const now = Date.now()
   const result = new Map<string, ProjectLiveStatus>()
   const activityFiles = new Set<string>()
+  const processFor = readSessionProcesses()
   for (const entry of listProjects()) {
     const newest = newestSessionFile(entry.path)
     let status: LiveSessionStatus = { state: 'ended' }
     if (newest) {
       try {
         const sessionStart = firstTimestamp(readJsonlHead(newest.file))
-        status = deriveLiveSessionStatus(readActivityTail(newest.file), now, sessionStart)
+        status = deriveLiveSessionStatus(readActivityTail(newest.file), now, sessionStart, processFor(path.basename(newest.file, '.jsonl')))
       } catch {
         // File vanished mid-read (session cleanup) — treat as ended.
       }
@@ -378,26 +478,35 @@ export interface LiveNotification {
 // tests — live.ts imports `electron` for Tray/Notification and cannot be
 // loaded outside it, which left these two rules unchecked.
 //
-// Two rules, and they differ on purpose. A turn ending is worth a ping only
-// when the window is not already in front of you. A hook failure ALWAYS pings:
-// it is otherwise entirely silent, which is the failure mode the curate hook's
-// own logfile exists to make visible.
+// Three rules, and they differ on purpose. A turn ending, or a turn coming to
+// wait on you, is worth a ping only when the window is not already in front of
+// you; a session the Desktop runs is skipped for the second, since the Desktop
+// sends its own "needs you". A hook failure ALWAYS pings: it is otherwise
+// entirely silent, which is the failure mode the curate hook's own logfile
+// exists to make visible.
+const inUse = (state: LiveSessionState | undefined) => state === 'active' || state === 'waiting'
+
 export function notificationsFor(
   // null before the first sweep. Startup state must never fire notifications —
   // every session would announce itself the moment the app opened.
   prev: Map<string, LiveSessionStatus> | null,
   statuses: ReturnType<typeof computeStatuses>,
   windowFocused: boolean,
+  desktopSessionIds: ReadonlySet<string> = new Set(),
 ): LiveNotification[] {
   if (!prev) return []
   const out: LiveNotification[] = []
-  for (const [id, { entry, status }] of statuses) {
+  for (const [id, { entry, status, sessionId }] of statuses) {
     const before = prev.get(id)
-    if (before?.state === 'active' && status.state !== 'active' && !windowFocused) {
+    if (inUse(before?.state) && !inUse(status.state) && !windowFocused) {
       out.push({
         title: `Session ended — ${entry.name}`,
         body: status.aiTitle ?? status.lastToolName ?? 'Turn complete',
       })
+    }
+    const desktopOwned = sessionId !== undefined && desktopSessionIds.has(sessionId)
+    if (status.state === 'waiting' && before?.state !== 'waiting' && !windowFocused && !desktopOwned) {
+      out.push({ title: `${entry.name} needs you`, body: status.waitingFor ?? status.aiTitle ?? 'Waiting on you' })
     }
     if (status.latestHookErrorAt && status.latestHookErrorAt !== before?.latestHookErrorAt) {
       out.push({ title: `Hook failed in ${entry.name}`, body: status.aiTitle ?? 'A Stop hook reported errors' })
@@ -415,6 +524,7 @@ export function toSnapshot(statuses: ReturnType<typeof computeStatuses>): LiveSt
       sessionId,
       state: status.state,
       lastToolName: status.lastToolName,
+      waitingFor: status.waitingFor,
       lastTimestamp: status.lastTimestamp,
       sessionStart: status.sessionStart,
       model: status.model,

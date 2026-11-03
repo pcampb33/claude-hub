@@ -46,8 +46,17 @@ test('parseClaudeRecord reads the measured format', () => {
     procStart: '134367937471987430',
     interactive: true,
     status: 'shell',
+    waitingFor: null,
     updatedAtIso: new Date(1792323765882).toISOString(),
   })
+})
+
+test("parseClaudeRecord: 'waiting' carries what it waits on, and only while waiting", () => {
+  // Shape measured 2026-11-02 (Claude Code 2.1.316) with an AskUserQuestion open.
+  const waiting = parseClaudeRecord(real({ status: 'waiting', waitingFor: 'approve Bash: npm test' }), '270052.json')
+  assert.deepEqual([waiting?.status, waiting?.waitingFor], ['waiting', 'approve Bash: npm test'])
+  assert.equal(parseClaudeRecord(real({ status: 'busy', waitingFor: 'stale' }), '270052.json')?.waitingFor, null)
+  assert.equal(parseClaudeRecord(real({ status: 'waiting', waitingFor: 3 }), '270052.json')?.waitingFor, null)
 })
 
 test('parseClaudeRecord: headless runs are not interactive; odd fields read as unknown, not guessed', () => {

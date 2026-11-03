@@ -210,6 +210,8 @@ export interface StateInput {
   // Claude Code's own status for the session's process (its
   // ~/.claude/sessions record); absent or 'unknown' = derive from the transcript.
   claudeStatus?: OutsideSession['status'] | null
+  // What a 'waiting' process waits on, in Claude Code's words.
+  claudeWaitingFor?: string | null
 }
 
 export interface DerivedState {
@@ -297,6 +299,7 @@ export function deriveDesktopState(input: StateInput): DerivedState {
   if (input.hostUnreachable) return { ...base, state: 'unknown', stateDetail: "can't reach the desktop host" }
   if (!input.alive) return { ...base, state: 'exited', stateDetail: null }
   if (input.prompt) return { ...base, state: 'needs-you', stateDetail: input.prompt.line }
+  if (input.claudeStatus === 'waiting') return { ...base, state: 'needs-you', stateDetail: input.claudeWaitingFor ?? null }
   if (input.claudeStatus === 'busy') {
     return { ...base, state: 'working', stateDetail: facts?.turnOpen ? facts.toolSinceClose : null }
   }

@@ -102,7 +102,10 @@ function ago(iso: string, nowMs: number): string {
 const RANK = ['floor-red', 'automation', 'inbox', 'extensions', 'health', 'floor-stale', 'automation-unknown', 'recall']
 const rankOf = (key: string) => RANK.findIndex((r) => key === r || key.startsWith(`${r}:`))
 
-export function buildNeeds(src: NeedsSources, nowMs: number): NeedsSummary {
+// inboxOnBoard: the Inbox widget is on the board and already lists the notes
+// with their actions, so the inbox is not repeated here. Its read still counts
+// toward pending/unchecked, so a slow inbox never lets the headline claim zero.
+export function buildNeeds(src: NeedsSources, nowMs: number, opts: { inboxOnBoard?: boolean } = {}): NeedsSummary {
   const items: NeedItem[] = []
   const pending: SourceKey[] = []
   const unchecked: Unchecked[] = []
@@ -117,7 +120,7 @@ export function buildNeeds(src: NeedsSources, nowMs: number): NeedsSummary {
   }
 
   const inbox = read('inbox', src.inbox)
-  if (inbox && inbox.count > 0) {
+  if (inbox && inbox.count > 0 && !opts.inboxOnBoard) {
     const projects = [...new Set(inbox.entries.map((e) => e.project).filter((p): p is string => !!p))]
     items.push({
       key: 'inbox',
@@ -139,10 +142,15 @@ export function buildNeeds(src: NeedsSources, nowMs: number): NeedsSummary {
         key: `automation:${a.id}`,
         tone: 'danger',
         badge: '!',
-        title: `${a.label} isn’t doing its job`,
+        // Over budget is its own finding: a job can be doing its job and still cost too much.
+        title: a.overBudget ? `${a.label} is over its spend ceiling` : `${a.label} isn’t doing its job`,
         sub: a.detail,
         cta: 'Look',
-        why: `${a.kind === 'hook' ? 'Hook' : 'Scheduled job'} (${a.trigger}). Its work probe says it isn’t doing its job.`,
+        why: `${a.kind === 'hook' ? 'Hook' : 'Scheduled job'} (${a.trigger}). ${
+          a.overBudget
+            ? 'Its runs cost more than the 7-day ceiling. The last-24h figure says whether it is still burning or only an old incident is left in the window.'
+            : 'Its work probe says it isn’t doing its job.'
+        }`,
         peek: { widget: 'automation', ctx: { item: a.id } },
         nav: { view: 'global', label: 'Open Settings' },
       })

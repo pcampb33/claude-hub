@@ -4,6 +4,7 @@ import { useLiveStatus } from './useLiveStatus'
 import { useNavigate } from '../shared/useHashRoute'
 import { SearchTrigger } from '../shared/SearchTrigger'
 import { formatElapsed, formatTokens } from './format'
+import { UsageChip } from './UsageChip'
 import './titlebar.css'
 
 // The frameless window's real titlebar: an always-rendered 36px strip above
@@ -45,7 +46,8 @@ function usePillCap(): number {
 
 function pillTitle(p: LiveProjectStatus, nowMs: number): string {
   const parts: string[] = []
-  if (p.lastToolName) parts.push(p.lastToolName)
+  if (p.state === 'waiting') parts.push(`needs you: ${p.waitingFor ?? 'a prompt'}`)
+  else if (p.lastToolName) parts.push(p.lastToolName)
   // Both durations, each labelled. The pill prints the first one bare, and
   // "12m 47s" next to an unqualified "idle 3s" is two numbers with no way to
   // tell which the pill was showing.
@@ -75,7 +77,7 @@ export function TitleBar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const snapshot = useLiveStatus()
   const navigate = useNavigate()
   const maxPills = usePillCap()
-  const active = snapshot?.projects.filter((p) => p.state === 'active') ?? []
+  const active = snapshot?.projects.filter((p) => p.state === 'active' || p.state === 'waiting') ?? []
 
   // Local 1s tick keeps the elapsed counters moving between pushes.
   const [nowMs, setNowMs] = useState(() => Date.now())
@@ -100,7 +102,7 @@ export function TitleBar({ onOpenPalette }: { onOpenPalette: () => void }) {
             return (
               <Tag
                 key={p.registryId}
-                className="titlebar-pill"
+                className={p.state === 'waiting' ? 'titlebar-pill is-waiting' : 'titlebar-pill'}
                 title={pillTitle(p, nowMs)}
                 {...(p.sessionId
                   ? { type: 'button' as const, onClick: () => navigate('sessions', p.sessionId) }
@@ -132,6 +134,7 @@ export function TitleBar({ onOpenPalette }: { onOpenPalette: () => void }) {
         <span className="titlebar-idle">no live sessions</span>
       )}
       <SearchTrigger onOpen={onOpenPalette} className="search-trigger-titlebar" />
+      <UsageChip />
     </div>
   )
 }

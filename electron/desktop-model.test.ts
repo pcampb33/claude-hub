@@ -220,6 +220,9 @@ test("state: Claude Code's own status wins over the transcript, but not over a m
     (({ state, stateDetail }) => [state, stateDetail])(deriveDesktopState(input({ claudeStatus: 'busy', transcript: lines(user(), assistant('Edit')) }))),
     ['working', 'Edit'],
   )
+  // waiting = a dialog blocks the turn, named in Claude Code's words.
+  const waiting = deriveDesktopState(input({ claudeStatus: 'waiting', claudeWaitingFor: 'approve Bash: rm x', transcript: lines(user(), assistant('Bash')) }))
+  assert.deepEqual([waiting.state, waiting.stateDetail], ['needs-you', 'approve Bash: rm x'])
   // idle = your turn even while the transcript still shows the turn open...
   assert.equal(deriveDesktopState(input({ claudeStatus: 'idle', transcript: lines(user(), assistant('Bash')) })).state, 'your-turn')
   // ...or can't be read; a session with no turns yet is still starting.

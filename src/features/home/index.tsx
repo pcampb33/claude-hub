@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { PRESETS, useHomeLayout, type PresetId } from './layout'
 import { WidgetFrame } from './frame'
+import { BoardContext } from './frame-context'
 import { PeekProvider } from './peek'
 import { usePeek } from './peek-context'
 import { WIDGETS, WIDGET_IDS } from './registry'
@@ -12,16 +13,20 @@ import './home.css'
 // removes, resizes and reorders; when-relevant widgets hide themselves when
 // they have nothing to say. Every widget opens a slide-over peek.
 export function HomeView() {
+  const home = useHomeLayout(WIDGET_IDS)
+  const onBoard = useMemo(() => new Set(home.layout.items.map((i) => i.id)), [home.layout.items])
   return (
-    <PeekProvider>
-      <HomeBoard />
-      <PeekPanel />
-    </PeekProvider>
+    <BoardContext.Provider value={onBoard}>
+      <PeekProvider>
+        <HomeBoard home={home} />
+        <PeekPanel />
+      </PeekProvider>
+    </BoardContext.Provider>
   )
 }
 
-function HomeBoard() {
-  const { layout, applyPreset, reset, setSize, setMode, setAuto, move, remove, add } = useHomeLayout(WIDGET_IDS)
+function HomeBoard({ home }: { home: ReturnType<typeof useHomeLayout> }) {
+  const { layout, applyPreset, reset, setSize, setMode, setAuto, move, remove, add } = home
   const [editing, setEditing] = useState(false)
   const shown = new Set(layout.items.map((i) => i.id))
   const library = (Object.keys(WIDGETS) as WidgetId[]).filter((id) => !shown.has(id))

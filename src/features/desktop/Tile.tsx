@@ -83,7 +83,8 @@ export function Tile({ session, nowMs, focused, focusToken, onFocus, handle, arr
           <span className="desk-tile-name">{s.name}</span>
         )}
         <span className="desk-tile-proj">{s.targetName}</span>
-        {s.tier !== null && <TierChip tier={s.tier} />}
+        {/* Audit is the default tier, so its badge says nothing; Guarded and Admin set a session apart. */}
+        {s.tier !== null && s.tier !== 'audit' && <TierChip tier={s.tier} />}
         <span className="desk-tile-right">
           <StatePill state={s.state} title={s.exitCode !== null ? `exit code ${s.exitCode}` : undefined} />
           <span className="desk-tile-meta" title={s.contextPct === null ? 'Context use not known' : undefined}>

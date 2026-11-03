@@ -14,7 +14,7 @@
 import fs from 'node:fs'
 import { listProjects } from './registry.ts'
 import { findSessionFiles, isHeadlessSessionCached, readSessionTitle } from './sessions.ts'
-import { deriveLiveSessionStatus, readActivityTail } from './live-core.ts'
+import { deriveLiveSessionStatus, readActivityTail, readSessionProcesses, type SessionProcess } from './live-core.ts'
 import type { SessionListEntry } from '../shared/ipc-types.ts'
 
 // How many sessions the list returns. The view groups them Live/Recent, so
@@ -60,10 +60,10 @@ function gatherCandidates(): Candidate[] {
   return candidates.sort((a, b) => b.mtimeMs - a.mtimeMs)
 }
 
-async function describe(candidate: Candidate, nowMs: number): Promise<SessionListEntry> {
+async function describe(candidate: Candidate, nowMs: number, proc: SessionProcess): Promise<SessionListEntry> {
   let status
   try {
-    status = deriveLiveSessionStatus(readActivityTail(candidate.filePath), nowMs)
+    status = deriveLiveSessionStatus(readActivityTail(candidate.filePath), nowMs, undefined, proc)
   } catch {
     status = { state: 'ended' as const } // vanished mid-read
   }
@@ -79,6 +79,7 @@ async function describe(candidate: Candidate, nowMs: number): Promise<SessionLis
     state: status.state,
     model: status.model,
     lastToolName: status.lastToolName,
+    waitingFor: status.waitingFor,
     lastTimestamp: status.lastTimestamp,
     contextPct: status.contextPct,
     // Last real turn, not mtime — exit bookkeeping rewrites mtime days later.
@@ -109,5 +110,6 @@ export async function listAllSessions(): Promise<SessionListEntry[]> {
     keep.push(candidate)
   }
 
-  return Promise.all(keep.map((candidate) => describe(candidate, nowMs)))
+  const processFor = readSessionProcesses()
+  return Promise.all(keep.map((candidate) => describe(candidate, nowMs, processFor(candidate.sessionId))))
 }

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { activitySentence, findSession, liveMeta, liveSessions, modelLabel, roomLeft, whereTimeWent } from './live-core.ts'
+import { activitySentence, blockedOn, findSession, liveMeta, liveSessions, modelLabel, roomLeft, stateLabel, whereTimeWent } from './live-core.ts'
 import type { LiveProjectStatus, SessionActivity } from '../../../../../shared/ipc-types.ts'
 
 const turns = (inputs: number[]) => inputs.map((input) => ({ input, output: 100, tool: true }))
@@ -38,6 +38,21 @@ test('live sessions: ended ones are dropped, working sorts before idle', () => {
   )
   assert.equal(findSession(snap, 'sc')?.registryId, 'c')
   assert.equal(liveMeta(liveSessions(snap)), '1 working · 1 idle')
+})
+
+test('live sessions: one waiting on you sorts first, counts apart, and never reads as idle', () => {
+  const snap = {
+    updatedAt: '',
+    projects: [
+      p({ registryId: 'a', state: 'active', lastTimestamp: '2026-10-17T11:00:00Z' }),
+      p({ registryId: 'w', state: 'waiting', lastTimestamp: '2026-10-17T09:00:00Z', waitingFor: 'approve Bash: ls' }),
+      p({ registryId: 'i', state: 'idle', lastTimestamp: '2026-10-17T12:00:00Z' }),
+    ],
+  }
+  const live = liveSessions(snap)
+  assert.deepEqual(live.map((s) => s.registryId), ['w', 'a', 'i'])
+  assert.equal(liveMeta(live), '1 needs you · 1 working · 1 idle')
+  assert.deepEqual(stateLabel(live[0]), { word: 'needs you', tone: 'danger' })
 })
 
 test('model label', () => {
@@ -80,6 +95,13 @@ test('sentence: a turn that is over says since when, and drops the waited clause
   assert.equal(activitySentence(a, clock), 'Turn over — waiting on you since 13:02 · 3 edits in 2 files')
   const one = act({ editsCount: 1, filesEdited: 1, now: { state: 'thinking', sinceMs: 0, tool: 'Read', target: 'a.ts' } })
   assert.equal(activitySentence(one, clock), 'Thinking · last Read a.ts · 1 edit in 1 file · waited on you 0m')
+})
+
+test('sentence: a session blocked on a dialog says what it waits on, not the timeline’s "Thinking"', () => {
+  const a = act({ editsCount: 1, filesEdited: 1, now: { state: 'thinking', sinceMs: 0, tool: 'Bash', target: 'ls app' } })
+  assert.equal(activitySentence(a, clock, blockedOn(p({ state: 'waiting', waitingFor: 'approve Bash: npm test' }))), 'Waiting on you: approve Bash: npm test · 1 edit in 1 file')
+  assert.equal(activitySentence(a, clock, blockedOn(p({ state: 'waiting' }))), 'Waiting on you · 1 edit in 1 file')
+  assert.equal(blockedOn(p({ state: 'active' })), null)
 })
 
 test('where the time went: groups summed, largest first, breaks last', () => {

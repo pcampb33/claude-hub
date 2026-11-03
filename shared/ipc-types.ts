@@ -77,6 +77,7 @@ export interface SessionListEntry {
   state: LiveSessionState
   model?: string
   lastToolName?: string
+  waitingFor?: string // set while state is 'waiting': what it waits on ("approve Bash: npm test")
   lastTimestamp?: string // ISO, newest timestamped transcript line
   contextPct?: number // 0-100, newest assistant usage vs approximate model context limit
   date: string // ISO, from the transcript's mtime
@@ -237,6 +238,9 @@ export interface GlobalAutomation {
   command: string
   state: GlobalItemState
   detail: string // why this state, in words the UI shows verbatim
+  // Its model calls cost more than the 7-day ceiling (job-freshness.ts
+  // spendBreach). False when under it or when spend is unknown.
+  overBudget: boolean
   lastRunIso: string | null // null = never ran, or nobody could tell (see detail)
   // Conditions that don't change the verdict but change what to expect of it —
   // e.g. a task that silently skips a run if the machine is asleep.
@@ -624,8 +628,11 @@ export interface VerifyJob {
 // newest transcript in ~/.claude/projects. 'active' = fresh activity and
 // the turn hasn't closed yet; 'idle' = fresh activity but the turn ended
 // (turn_duration/stop_hook_summary observed after it); 'ended' = nothing
-// recent.
-export type LiveSessionState = 'active' | 'idle' | 'ended'
+// recent. 'waiting' = the turn is open but blocked on you (a permission
+// prompt, AskUserQuestion): Claude Code's own process record says so, or, when
+// those records can't be read, the transcript's unanswered tool call does.
+// 'waiting' is as in-use as 'active': resuming it would kill the live reader.
+export type LiveSessionState = 'active' | 'waiting' | 'idle' | 'ended'
 
 // One recent assistant turn, for the hero's work-rhythm waveform: bar height =
 // output tokens, color = whether the turn called a tool vs. produced text.
@@ -643,6 +650,7 @@ export interface LiveProjectStatus {
   sessionId?: string
   state: LiveSessionState
   lastToolName?: string
+  waitingFor?: string // set while state is 'waiting': what it waits on ("approve Bash: npm test")
   lastTimestamp?: string // ISO, newest timestamped transcript line
   sessionStart?: string // ISO, first timestamped line — true session start (elapsed = now - this)
   model?: string
@@ -968,7 +976,7 @@ export interface OutsideSession {
   cwd: string
   target: DesktopTargetRef | null // null = the folder isn't a known project or experiment
   targetName: string | null
-  status: 'idle' | 'busy' | 'shell' | 'unknown'
+  status: 'idle' | 'busy' | 'shell' | 'waiting' | 'unknown'
   updatedAtIso: string | null
 }
 

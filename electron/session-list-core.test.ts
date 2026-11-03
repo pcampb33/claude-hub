@@ -129,3 +129,22 @@ test('listAllSessions dates and grades a session by its last turn, not by exit b
   assert.equal(entry.state, 'ended')
   assert.ok(Date.now() - Date.parse(entry.date) > HOUR - 5000, `date must be the hour-old turn, got ${entry.date}`)
 })
+
+test("a session whose live process says 'waiting' lists as waiting, the state the Resume gate refuses", async () => {
+  // A record in the redirected ~/.claude/sessions, keyed to this test's own
+  // (live) pid, in the shape Claude Code 2.1.316 writes while a prompt is open.
+  const id = '22222222-0000-0000-0000-000000000001'
+  const records = path.join(home, '.claude', 'sessions')
+  fs.mkdirSync(records, { recursive: true })
+  const record = path.join(records, `${process.pid}.json`)
+  fs.writeFileSync(record, JSON.stringify({ pid: process.pid, sessionId: id, cwd: PROJECT.path, kind: 'interactive', entrypoint: 'cli', status: 'waiting', waitingFor: 'approve Bash: npm test' }))
+  // Quiet for an hour mid-turn: without the record this read 'ended'.
+  writeSession(id, [userLine('cli', HOUR), assistantLine(HOUR)], 0)
+  try {
+    const entry = (await listAllSessions()).find((e) => e.sessionId === id)!
+    assert.deepEqual([entry.state, entry.waitingFor], ['waiting', 'approve Bash: npm test'])
+  } finally {
+    fs.rmSync(records, { recursive: true, force: true })
+    fs.rmSync(path.join(sessionDir, `${id}.jsonl`), { force: true })
+  }
+})

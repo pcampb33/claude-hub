@@ -79,6 +79,7 @@ function SessionCard({
       className={`desk-card${focused ? ' focused' : ''}`}
       style={idColor(s.color)}
       onClick={onPick}
+      title={s.targetName}
       aria-current={focused ? 'true' : undefined}
       aria-label={`${s.name}, ${s.targetName}. Alt ${s.slot}.${s.poppedOut ? ' In its own window.' : staged ? ' On stage.' : ''}`}
     >
@@ -87,9 +88,9 @@ function SessionCard({
       <kbd className="desk-key">Alt {s.slot}</kbd>
       <span className="desk-card-meta">
         <StatePill state={s.state} />
-        <span className="desk-card-proj">{s.targetName}</span>
-        {s.tier !== null && <TierChip tier={s.tier} />}
-        <span>{sessionTime(s, nowMs)}</span>
+        {/* The project is in the card's tooltip: at dock width it clipped to a few letters. Audit is the default tier, so only Guarded and Admin get a badge. */}
+        {s.tier !== null && s.tier !== 'audit' && <TierChip tier={s.tier} />}
+        <span className="desk-card-time">{sessionTime(s, nowMs)}</span>
         <span
           className={`desk-ctx${pct === null ? ' unknown' : ''}`}
           title={pct === null ? 'Context use not known' : `Context ${pct}% used`}
@@ -121,6 +122,7 @@ function OutsideCard({
     <button
       className={`desk-card desk-card-outside${focused ? ' focused' : ''}`}
       onClick={onPick}
+      title={where}
       aria-current={focused ? 'true' : undefined}
       aria-label={`${name}, ${where}, running in another terminal, ${OUTSIDE_STATUS[o.status]}. Opens a read-only view.${staged ? ' On stage.' : ''}`}
     >
@@ -128,10 +130,9 @@ function OutsideCard({
       <span className="desk-card-name">{name}</span>
       <span className="desk-card-ro">read-only</span>
       <span className="desk-card-meta">
-        <span className="desk-state" data-state={o.status === 'busy' ? 'working' : o.status === 'idle' ? 'your-turn' : 'unknown'}>
+        <span className="desk-state" data-state={o.status === 'busy' ? 'working' : o.status === 'idle' ? 'your-turn' : o.status === 'waiting' ? 'needs-you' : 'unknown'}>
           {OUTSIDE_STATUS[o.status]}
         </span>
-        <span className="desk-card-proj">{where}</span>
         {o.updatedAtIso && <span>{formatDuration(nowMs - Date.parse(o.updatedAtIso))}</span>}
       </span>
     </button>

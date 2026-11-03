@@ -128,6 +128,16 @@ function stripPlaceholders(text: string): string {
     .trim()
 }
 
+// Claude Code wraps a paste as <pasted_content id="db22">…</pasted_content id="db22">
+// (the closing tag repeats the id). The paste is the human's text; the
+// wrapper is not. Only that exact pair is unwrapped (transcripts legitimately
+// contain markup).
+const PASTED = /<pasted_content id="([0-9a-f]+)">([\s\S]*?)<\/pasted_content(?: id="\1")?>/g
+
+export function unwrapPasted(text: string): string {
+  return text.replace(PASTED, '$2').trim()
+}
+
 const MAX_TITLE_LENGTH = 120
 
 function clampTitle(text: string): string {
@@ -179,7 +189,7 @@ export async function readSessionTitle(filePath: string): Promise<string> {
       if (isCommandWrapper(text)) {
         if (firstCommand === null) firstCommand = commandTitle(text)
       } else {
-        const prose = stripPlaceholders(text)
+        const prose = stripPlaceholders(unwrapPasted(text))
         if (prose.length > 0) firstUserMessage = clampTitle(prose)
       }
     }
@@ -269,6 +279,12 @@ export async function parseTranscriptFile(
   for await (const line of rl) {
     const parsed = parseLine(line)
     if (!parsed?.message) continue
+    // Claude Code logs each API request's composed user content (system
+    // reminders, caveats, the prompt again) as an api-request-blob line with
+    // role "user". It is not a turn: over the 51 interactive sessions of
+    // 2026-10-27..11-02 those lines were 888 of 25,025 parsed turns but 43% of
+    // the text, which the Sessions view rendered as the human's message.
+    if (parsed.type === 'api-request-blob') continue
     // Sidechain turns are subagent-internal activity, not the user's actual
     // conversation — filtered out of the default transcript view. Reading a
     // subagent's own file (100% sidechain lines) opts in via the flag.
@@ -329,7 +345,7 @@ export async function readSession(projectPath: string, sessionId: string): Promi
   if (!match) return []
   const messages = await parseTranscriptFile(match.filePath)
   return messages.flatMap((m) => {
-    const text = readableTurn(m.text)
+    const text = readableTurn(m.role === 'user' ? unwrapPasted(m.text) : m.text)
     return text === null ? [] : [{ ...m, text }]
   })
 }

@@ -232,9 +232,8 @@ async function getSessionSummary(
 export function parseBranchHeader(header: string): string {
   const line = header.replace(/^## /, '')
   if (line.startsWith('HEAD (no branch)')) return 'HEAD'
-  // Reachable only if the caller ever asks for status without the log below,
-  // which fails on a repo with no commits — but it is the documented header
-  // for that repo, and "No" is a bad thing to call a branch.
+  // The documented header for a repo with no commits yet, and "No" is a bad
+  // thing to call a branch.
   const noCommits = /^No commits yet on (.+)$/.exec(line)
   if (noCommits) return noCommits[1]
   return line.split('...')[0].split(' ')[0]
@@ -246,16 +245,19 @@ export function parseBranchHeader(header: string): string {
 // `git --version` alone across those projects measures 56ms of the 283ms the
 // four-call version cost. Folding the branch into the status call and the two
 // log formats into one takes that to 203ms.
-async function getGitStatus(projectPath: string): Promise<GitStatus | null> {
+export async function getGitStatus(projectPath: string): Promise<GitStatus | null> {
   try {
     const run = async (args: string[]) => {
       const { stdout } = await execFileAsync('git', args, { cwd: projectPath, encoding: 'utf-8' })
       return stdout
     }
 
+    // The log fails on a repo with no commits yet. That is still a repo with a
+    // branch and changes, so it must not take the status down with it: it did,
+    // and the sandbox (git-inited, never committed) rendered "No git".
     const [statusOutput, lastCommit] = await Promise.all([
       run(['status', '--porcelain', '-b']),
-      run(['log', '-1', '--format=%cI%n%s']),
+      run(['log', '-1', '--format=%cI%n%s']).catch(() => ''),
     ])
 
     const [header, ...changes] = statusOutput.split('\n')
@@ -268,9 +270,8 @@ async function getGitStatus(projectPath: string): Promise<GitStatus | null> {
       lastCommitMessage: lastCommitMessage?.trim() || null,
     }
   } catch {
-    // Not a git repo, no commits yet, or git itself failed — either way, no
-    // git status. (Unchanged: the old four-call version also returned null for
-    // all of these, because one rejection failed the whole Promise.all.)
+    // Not a git repo, or git itself failed. These two still share null; only
+    // the first happens on this machine (2026-11-02).
     return null
   }
 }

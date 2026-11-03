@@ -12,6 +12,7 @@ function job(over: Partial<GlobalAutomation>): GlobalAutomation {
     command: '',
     state: 'ok',
     detail: '',
+    overBudget: false,
     lastRunIso: null,
     warnings: [],
     taskName: 'claude-hub vault linker',

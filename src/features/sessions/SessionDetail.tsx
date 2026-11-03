@@ -85,7 +85,7 @@ export function SessionDetail({
   // shares the gate for a second reason: something is still appending to
   // that transcript, so trashing it mid-turn is a write into a file being
   // written.
-  const inUse = entry.state === 'active'
+  const inUse = entry.state === 'active' || entry.state === 'waiting'
 
   const copyId = () => {
     // The label only claims success when the write actually resolved.
@@ -209,7 +209,7 @@ export function SessionDetail({
             {messages && messages.length > 0 && (
               <SessionTranscript
                 messages={messages}
-                autoExpandTail={entry.state === 'active'}
+                autoExpandTail={inUse}
                 highlight={find.open ? find.query : undefined}
               />
             )}

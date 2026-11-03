@@ -161,15 +161,17 @@ test('evaluateMatchOutput caps at 3 matches', () => {
   const raw = JSON.stringify({
     matches: titles.map((t) => ({ title: t, confidence: 'high', reason: 'r' })),
   })
-  assert.equal(evaluateMatchOutput(raw, titles).length, 3)
+  assert.equal(evaluateMatchOutput(raw, titles)?.length, 3)
 })
 
-test('evaluateMatchOutput handles fenced JSON and garbage', () => {
+test('evaluateMatchOutput handles fenced JSON; garbage is a failure, not an empty match', () => {
   const fenced = '```json\n{"matches": [{"title": "A", "confidence": "high", "reason": "r"}]}\n```'
   assert.deepEqual(evaluateMatchOutput(fenced, ['A']), [{ title: 'A', reason: 'r' }])
-  assert.deepEqual(evaluateMatchOutput('not json at all', ['A']), [])
-  assert.deepEqual(evaluateMatchOutput('null', ['A']), [])
-  assert.deepEqual(evaluateMatchOutput('{"matches": "nope"}', ['A']), [])
+  assert.equal(evaluateMatchOutput('not json at all', ['A']), null)
+  assert.equal(evaluateMatchOutput('null', ['A']), null)
+  assert.equal(evaluateMatchOutput('{"matches": "nope"}', ['A']), null)
+  assert.equal(evaluateMatchOutput('{}', ['A']), null)
+  assert.deepEqual(evaluateMatchOutput('{"matches": []}', ['A']), [])
 })
 
 test('evaluateMatchOutput defaults a missing reason', () => {

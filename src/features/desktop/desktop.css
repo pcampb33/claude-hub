@@ -204,6 +204,11 @@
   gap: var(--space-3);
 }
 
+/* Dock hidden: the terminals get its width (each column of a 3-wide grid gains ~90px, ~11 characters). */
+.desk-body.dock-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* ---- Dock ------------------------------------------------------------------- */
 
 .desk-dock {
@@ -296,14 +301,16 @@
   white-space: nowrap;
 }
 
-.desk-card-meta .desk-card-proj {
-  flex: 1 1 auto;
+/* The one meta item that gives way when a badge makes the row tight. */
+.desk-card-meta .desk-card-time {
+  flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .desk-ctx {
+  margin-left: auto;
   width: 34px;
   height: 4px;
   border-radius: 2px;

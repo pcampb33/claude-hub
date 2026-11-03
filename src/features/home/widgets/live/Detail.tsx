@@ -9,7 +9,9 @@ import { Hero } from '../../charts'
 import { runAction, useGo } from '../../actions'
 import {
   activitySentence,
+  blockedOn,
   clockTime,
+  stateLabel,
   findSession,
   formatSpan,
   liveSessions,
@@ -69,7 +71,7 @@ function Overview({ sessions }: { sessions: LiveProjectStatus[] }) {
                     <b>{s.name}</b> · {s.aiTitle ?? 'Untitled session'}
                   </>
                 }
-                figure={`${s.contextPct !== undefined ? `${s.contextPct}% · ` : ''}${s.state === 'active' ? 'working' : 'idle'} ›`}
+                figure={`${s.contextPct !== undefined ? `${s.contextPct}% · ` : ''}${stateLabel(s).word} ›`}
                 target={{
                   role: 'button',
                   tabIndex: 0,
@@ -116,7 +118,8 @@ function Gone() {
 function SessionPeek({ s }: { s: LiveProjectStatus }) {
   const now = useNow(30_000)
   const go = useGo()
-  const working = s.state === 'active'
+  // In use either way: a session waiting on a prompt still has its reader.
+  const working = s.state === 'active' || s.state === 'waiting'
   const model = modelLabel(s.model)
   const room = roomLeft(s)
   const turns = s.recentTurns ?? []
@@ -134,7 +137,7 @@ function SessionPeek({ s }: { s: LiveProjectStatus }) {
           : 'turns of room: context size not reported'
 
   return (
-    <PeekContent crumb={CRUMB} title={`${s.name} · ${working ? 'working' : 'idle'}`}>
+    <PeekContent crumb={CRUMB} title={`${s.name} · ${stateLabel(s).word}`}>
       <div className="peek-live">
         <Sec bare>
           <div className="sub">
@@ -178,7 +181,7 @@ function SessionPeek({ s }: { s: LiveProjectStatus }) {
               )}
               <p>{whereTimeWent(a)}</p>
               <p className="sub">
-                {activitySentence(a, clockTime)}.{' '}
+                {activitySentence(a, clockTime, blockedOn(s))}.{' '}
                 {a.windowStartMs > a.startMs
                   ? `The strip shows the last ${formatSpan(a.endMs - a.windowStartMs)}; the totals cover the whole session since ${clockTime(a.startMs)}.`
                   : 'The strip and the totals cover the whole session.'}{' '}
@@ -199,6 +202,7 @@ function SessionPeek({ s }: { s: LiveProjectStatus }) {
               ['Project', s.name],
               ['Model', model ?? '—'],
               ['Elapsed', s.sessionStart ? formatElapsed(s.sessionStart, now) : '—'],
+              ...(s.waitingFor ? ([['Waiting on', s.waitingFor]] as [string, string][]) : []),
               ['Last tool', s.lastToolName ?? '—'],
               ['Session ID', sid ? <Code>{sid}</Code> : '—'],
             ]}

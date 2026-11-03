@@ -8,6 +8,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { computeStatuses, notificationsFor, toSnapshot, type LiveSessionStatus } from './live-core'
+import { onDesktopSnapshot } from './desktop-core'
 import { IPC_CHANNELS } from '../shared/ipc-types'
 
 // fs.watch({recursive}) is the latency win but is unreliable on OneDrive
@@ -25,6 +26,9 @@ let debounceTimer: NodeJS.Timeout | null = null
 // first sweep — startup state must never fire notifications.
 let prev: Map<string, LiveSessionStatus> | null = null
 let lastSerialized = ''
+// Conversations the Desktop is running: it sends its own "needs you".
+let desktopSessionIds: ReadonlySet<string> = new Set()
+let stopDesktopWatch: (() => void) | null = null
 
 // 16x16 terracotta tray icons, generated programmatically (PNG bytes
 // inlined — the repo ships no raster app icon, and Windows trays can't
@@ -52,17 +56,19 @@ function notify(title: string, body: string): void {
 function detectTransitions(statuses: ReturnType<typeof computeStatuses>): void {
   // `?? true` preserves the original `win && !win.isFocused()`: with no window
   // at all, a turn-end ping is suppressed rather than fired into the void.
-  for (const { title, body } of notificationsFor(prev, statuses, win?.isFocused() ?? true)) {
+  for (const { title, body } of notificationsFor(prev, statuses, win?.isFocused() ?? true, desktopSessionIds)) {
     notify(title, body)
   }
 }
 
 function updateTray(statuses: ReturnType<typeof computeStatuses>): void {
   if (!tray) return
-  const active = [...statuses.values()].filter(({ status }) => status.state === 'active')
+  const active = [...statuses.values()].filter(({ status }) => status.state === 'active' || status.state === 'waiting')
   tray.setImage(active.length > 0 ? TRAY_ACTIVE : TRAY_IDLE)
   tray.setToolTip(
-    active.length > 0 ? `claude-hub — ${active.map(({ entry }) => entry.name).join(', ')} active` : 'claude-hub',
+    active.length > 0
+      ? `claude-hub — ${active.map(({ entry, status }) => `${entry.name} ${status.state === 'waiting' ? 'needs you' : 'active'}`).join(', ')}`
+      : 'claude-hub',
   )
 }
 
@@ -109,11 +115,16 @@ export function initLiveStatus(mainWindow: BrowserWindow): void {
   } catch {
     // Root missing or recursive watch unavailable — the poll still covers us.
   }
+  stopDesktopWatch = onDesktopSnapshot((snapshot) => {
+    desktopSessionIds = new Set(snapshot.sessions.filter((s) => s.alive).map((s) => s.claudeSessionId))
+  })
   pollTimer = setInterval(sweep, POLL_MS)
   sweep()
 }
 
 export function disposeLiveStatus(): void {
+  stopDesktopWatch?.()
+  stopDesktopWatch = null
   watcher?.close()
   watcher = null
   if (pollTimer) clearInterval(pollTimer)

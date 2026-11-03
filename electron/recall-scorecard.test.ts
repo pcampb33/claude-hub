@@ -62,6 +62,18 @@ test('parseRecallLog handles cost=n/a and empty input', () => {
   assert.deepEqual(parseRecallLog('').records, [])
 })
 
+test('parseRecallLog counts an unparseable match reply as an error with its cost, never a no-match', () => {
+  const { records, errors, spendUsd } = parseRecallLog(
+    [
+      `2026-11-02T10:00:00.000Z [pid 1] start session=bad-1 project=hub promptChars=90 (worker spawned)`,
+      `2026-11-02T10:00:09.000Z [pid 2] worker exit: match reply unparseable (session=bad-1 cost=$0.0300)`,
+    ].join('\n'),
+  )
+  assert.equal(records[0].outcome, 'attempted')
+  assert.equal(errors, 1)
+  assert.ok(Math.abs(spendUsd - 0.03) < 1e-9)
+})
+
 const offered = new Map([[TITLE.toLowerCase(), TITLE]])
 
 function readLine(filePath: string): string {

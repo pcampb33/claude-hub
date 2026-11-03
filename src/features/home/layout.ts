@@ -43,7 +43,9 @@ export const PRESETS: Record<PresetId, { label: string; note: string; items: Lay
       { id: 'inbox', size: 'S', auto: true },
       { id: 'recall', size: 'S', auto: false },
       { id: 'launch', size: 'S', auto: false },
-      { id: 'pace', size: 'S', auto: true },
+      // Always shown (2026-11-02, the user's call): weekly usage is worth a
+      // glance at any level, not only once it projects past half.
+      { id: 'pace', size: 'S', auto: false },
     ],
   },
   everything: {
@@ -68,9 +70,25 @@ const DEFAULT: Layout = { preset: 'balanced', items: PRESETS.balanced.items }
 
 function load(valid: ReadonlySet<string>): Layout {
   try {
-    const raw = localStorage.getItem(KEY)
+    return parseLayout(localStorage.getItem(KEY), valid)
+  } catch {
+    return DEFAULT // storage unreadable
+  }
+}
+
+// The saved layout string → the layout to show. Exported for tests.
+export function parseLayout(raw: string | null, valid: ReadonlySet<string>): Layout {
+  try {
     if (raw) {
       const parsed = JSON.parse(raw) as Layout
+      // A named preset is the preset as the code defines it now, not the copy
+      // saved when it was picked, so a change to a preset reaches boards that
+      // use it. Only a widget's mode (a view preference) carries over.
+      if (parsed.preset && parsed.preset !== 'custom' && parsed.preset in PRESETS) {
+        const modes = new Map((Array.isArray(parsed.items) ? parsed.items : []).map((i) => [i.id, i.mode]))
+        const items = PRESETS[parsed.preset].items.map((i) => (modes.get(i.id) ? { ...i, mode: modes.get(i.id) } : i))
+        return { preset: parsed.preset, items }
+      }
       if (Array.isArray(parsed.items)) {
         // Drop widgets that no longer exist rather than failing the whole layout.
         return { preset: parsed.preset ?? 'custom', items: parsed.items.filter((i) => valid.has(i.id)) }

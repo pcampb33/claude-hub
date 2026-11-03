@@ -1,4 +1,11 @@
 import { createContext, useContext, useEffect } from 'react'
+import type { WidgetId } from './types'
+
+// The widgets on the board, for one that defers to another (Needs you leaves
+// the inbox to the Inbox widget). Shared by the board and the peek, which sits
+// outside it, so the headline, the widget and its peek count alike.
+export const BoardContext = createContext<ReadonlySet<WidgetId>>(new Set())
+export const useOnBoard = (id: WidgetId): boolean => useContext(BoardContext).has(id)
 
 interface FrameApi {
   setMeta: (meta: string | null) => void

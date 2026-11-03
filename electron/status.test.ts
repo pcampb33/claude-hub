@@ -3,7 +3,8 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { sanitize, findSessionDirs, scanSessionDirs, parseBranchHeader } from './status.ts'
+import { execFileSync } from 'node:child_process'
+import { sanitize, findSessionDirs, scanSessionDirs, parseBranchHeader, getGitStatus } from './status.ts'
 
 // status.ts pulls in registry.ts, which SEEDS a registry.json (and git-inits a
 // sandbox dir) when APP_ROOT points somewhere without one. Pin it at a tmpdir
@@ -144,4 +145,16 @@ test('parseBranchHeader reads the branch out of every status -b header form', ()
   // rev-parse --abbrev-ref prints "HEAD" on a detached head; so does this.
   assert.equal(parseBranchHeader('## HEAD (no branch)'), 'HEAD')
   assert.equal(parseBranchHeader('## No commits yet on master'), 'master')
+})
+
+// A repo with no commits yet makes `git log` fail. That once nulled the whole
+// status, so the git-inited sandbox rendered "No git" with its changes hidden.
+test('getGitStatus still reports a repo with no commits yet', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-status-nocommit-'))
+  execFileSync('git', ['init', '-q', '-b', 'trunk'], { cwd: dir, windowsHide: true })
+  fs.writeFileSync(path.join(dir, 'a.txt'), 'x')
+  assert.deepEqual(await getGitStatus(dir), { branch: 'trunk', dirty: true, lastCommitDate: null, lastCommitMessage: null })
+
+  const notRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-status-norepo-'))
+  assert.equal(await getGitStatus(notRepo), null)
 })

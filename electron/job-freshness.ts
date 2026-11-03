@@ -137,11 +137,23 @@ function computeSpend(lines: string[], now: number): NonNullable<JobFreshness['s
 }
 
 // The over-budget sentence, or null when the last 7 days are under the ceiling.
-// Judged on the costs that were reported; n/a runs can only add to it.
+// Judged on the costs that were reported; n/a runs can only add to it. The
+// last 24h say whether it is still burning or only the tail of an incident is
+// left in the window (2026-11: a fixed incident kept curate over for a week).
 export function spendBreach(spend: JobFreshness['spend']): string | null {
   if (!spend || spend.week.usd <= SPEND_CEILING_7D_USD) return null
   const unknown = spend.week.unknownCostRuns ? ` plus ${spend.week.unknownCostRuns} run(s) of unknown cost` : ''
-  return `spent $${spend.week.usd.toFixed(2)} in 7 days${unknown} (ceiling $${SPEND_CEILING_7D_USD}) — normal is under $10`
+  return `spent $${spend.week.usd.toFixed(2)} in 7 days${unknown} (ceiling $${SPEND_CEILING_7D_USD}) — normal is under $10; last 24h $${spend.day.usd.toFixed(2)}`
+}
+
+// The first failure line inside the run that ends at lines[end], walking back
+// to that run's start or the previous run's outcome line.
+function failureInRun(lines: string[], end: number): string | null {
+  for (let i = end - 1; i >= 0; i--) {
+    if (/^(start[: ]|done:|exit:)/.test(logMessage(lines[i]))) return null
+    if (isFailureLine(lines[i])) return lines[i]
+  }
+  return null
 }
 
 export function assessJob(
@@ -176,11 +188,13 @@ export function assessJob(
   // stop false claims.
   let stamp: string | null = null
   let stampedLine: string | null = null
+  let stampedIndex = -1
   for (let i = lines.length - 1; i >= 0; i--) {
     const s = parseLogStamp(lines[i])
     if (s) {
       stamp = s
       stampedLine = lines[i]
+      stampedIndex = i
       break
     }
   }
@@ -239,6 +253,25 @@ export function assessJob(
       detail: running
         ? `started ${Math.round(hoursSince * 60)}m ago and has not reported an outcome yet — it may still be running`
         : `started ${hoursSince.toFixed(1)}h ago and never reported an outcome — that run did not finish`,
+      lastLine: reportedLine,
+      lastRunIso: stamp,
+      hoursSince,
+      spend,
+    }
+  }
+
+  // A run can finish and still have done less than the job: drain's
+  // `promote FAILED, left queued` and `vault commit FAILED` are mid-run lines
+  // followed by a normal `done:`, which read green. Scheduled jobs only: the
+  // hooks' logs interleave concurrent runs, so "this run's lines" is not a
+  // contiguous block there.
+  const degraded = expectedIntervalHours === null ? null : failureInRun(lines, stampedIndex)
+  if (degraded) {
+    return {
+      id,
+      label,
+      state: 'stale',
+      detail: `last run finished degraded — ${logMessage(degraded).trim().slice(0, 120)}`,
       lastLine: reportedLine,
       lastRunIso: stamp,
       hoursSince,

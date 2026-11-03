@@ -186,17 +186,18 @@ export interface RecallMatch {
 // confidence only, titles validated against the real index (the model can
 // hallucinate or paraphrase a title — an offer pointing at a file that
 // doesn't exist would burn trust in the whole mechanism), deduped, capped.
-export function evaluateMatchOutput(raw: string, knownTitles: string[]): RecallMatch[] {
+// null when the reply is not the requested shape: that is a failed call, not
+// "the vault has nothing relevant", and the scorecard must not count it as one.
+export function evaluateMatchOutput(raw: string, knownTitles: string[]): RecallMatch[] | null {
   let parsed: unknown
   try {
     parsed = JSON.parse(stripCodeFence(raw))
   } catch {
-    return []
+    return null
   }
-  if (!parsed || typeof parsed !== 'object') return []
-  const matches = Array.isArray((parsed as { matches?: unknown }).matches)
-    ? ((parsed as { matches: unknown[] }).matches)
-    : []
+  if (!parsed || typeof parsed !== 'object') return null
+  const matches = (parsed as { matches?: unknown }).matches
+  if (!Array.isArray(matches)) return null
 
   const byLower = new Map(knownTitles.map((t) => [t.trim().toLowerCase(), t]))
   const out: RecallMatch[] = []

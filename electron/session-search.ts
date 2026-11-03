@@ -77,6 +77,8 @@ async function searchSessionFile(
   for await (const line of rl) {
     const parsed = parseLine(line)
     if (!parsed?.message) continue
+    // A request's composed content (reminders, CLAUDE.md), not a turn; see parseTranscriptFile.
+    if (parsed.type === 'api-request-blob') continue
     if (parsed.isSidechain && !opts.includeSidechain) continue
     const role = parsed.message.role
     if (role !== 'user' && role !== 'assistant') continue

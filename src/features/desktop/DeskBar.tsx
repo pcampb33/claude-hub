@@ -21,12 +21,16 @@ export function DeskBar({
   hostStarting,
   layout,
   onLayout,
+  dockHidden,
+  onToggleDock,
   onNewSession,
 }: {
   sessions: DesktopSession[]
   hostStarting: boolean
   layout: PresetKey
   onLayout: (layout: PresetKey) => void
+  dockHidden: boolean
+  onToggleDock: () => void
   onNewSession: () => void
 }) {
   const sum = summarize(sessions)
@@ -58,6 +62,13 @@ export function DeskBar({
         {hostStarting && <span className="desk-faint"> · starting the session host…</span>}
       </span>
       <div className="desk-tools">
+        <button
+          className="desk-btn"
+          onClick={onToggleDock}
+          title={dockHidden ? 'Show the session list' : 'Hide the session list to give the terminals its width'}
+        >
+          {dockHidden ? 'Show list' : 'Hide list'}
+        </button>
         <div className="desk-seg" role="group" aria-label="Layout">
           {PRESETS.map((p) => (
             <button key={p.key} aria-pressed={layout === p.key} onClick={() => onLayout(p.key)} title={p.label}>

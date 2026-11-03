@@ -114,6 +114,10 @@ function runWorker(job) {
   }
   const { text, costUsd } = result
   const matches = evaluateMatchOutput(text, titles)
+  if (matches === null) {
+    log(`worker exit: match reply unparseable (session=${job.sessionId} cost=${fmtCost(costUsd)})`)
+    return
+  }
   if (matches.length === 0) {
     log(`worker done: no-match (session=${job.sessionId} cost=${fmtCost(costUsd)})`)
     return

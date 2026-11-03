@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { isHeadlessSession, isHeadlessSessionCached, parseTranscriptFile, readableTurn } from './sessions.ts'
+import { isHeadlessSession, isHeadlessSessionCached, parseTranscriptFile, readableTurn, readSessionTitle, unwrapPasted } from './sessions.ts'
 
 function tmpJsonl(lines: string[]): string {
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'hub-sessions-')), 's.jsonl')
@@ -110,6 +110,35 @@ test('parseTranscriptFile still returns control-markup turns verbatim, so turn c
   const messages = await parseTranscriptFile(file)
   assert.equal(messages.length, 3)
   assert.equal(messages[0].text, CLEAR_WRAPPER)
+})
+
+test('parseTranscriptFile skips api-request-blob lines, which carry role user but are no turn', async () => {
+  const file = tmpJsonl([
+    JSON.stringify({ message: { role: 'user', content: 'can you audit the view?' }, promptSource: 'typed' }),
+    JSON.stringify({
+      type: 'api-request-blob',
+      hash: 'fa78',
+      message: { role: 'user', content: [{ type: 'text', text: '<system-reminder>\nCodebase instructions…\n</system-reminder>\ncan you audit the view?' }] },
+    }),
+    JSON.stringify({ message: { role: 'assistant', content: 'Looking.' } }),
+  ])
+  assert.deepEqual(
+    (await parseTranscriptFile(file)).map((m) => m.text),
+    ['can you audit the view?', 'Looking.'],
+  )
+})
+
+test('unwrapPasted keeps the paste and drops only the exact pasted_content wrapper', () => {
+  // The real form: the closing tag repeats the id.
+  assert.equal(unwrapPasted('<pasted_content id="db22">\nI\'m kind of stuck\n</pasted_content id="db22">'), "I'm kind of stuck")
+  assert.equal(unwrapPasted('see <pasted_content id="1f44">a\nb</pasted_content> above'), 'see a\nb above')
+  // Markup that is not the harness's exact wrapper is someone's text.
+  assert.equal(unwrapPasted('the <pasted_content> tag'), 'the <pasted_content> tag')
+})
+
+test('readSessionTitle titles a pasted first prompt by the paste, not its wrapper', async () => {
+  const file = tmpJsonl([JSON.stringify({ message: { role: 'user', content: '<pasted_content id="db22">\nI\'m kind of stuck\n</pasted_content id="db22">' } })])
+  assert.equal(await readSessionTitle(file), "I'm kind of stuck")
 })
 
 test('isHeadlessSessionCached memoizes by path (returns the cached flag after the file is gone)', async () => {

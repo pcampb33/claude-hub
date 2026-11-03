@@ -30,6 +30,8 @@ const LINE_RE = /^(\S+) \[pid (\d+)\] (.+)$/
 const START_RE = /^start session=(\S+) project=(.+?) promptChars=\d+/
 const MATCHED_RE = /^worker done: matched \d+ (\[.*\]) \(session=(\S+) cost=(\S+)\)$/
 const NO_MATCH_RE = /^worker done: no-match \(session=(\S+) cost=(\S+)\)$/
+// A paid call whose reply would not parse: an error with a cost, never a no-match.
+const UNPARSEABLE_RE = /^worker exit: match reply unparseable \(session=(\S+) cost=(\S+)\)$/
 const DELIVERED_RE = /^done: delivered \(session=(\S+)\)$/
 // Legacy single-phase format (pre-worker, 2026-08-09 only): the injected
 // line carries no session id, so it correlates to the same pid's start line.
@@ -93,6 +95,11 @@ export function parseRecallLog(text: string): { records: RecallLogRecord[]; erro
       const cost = parseCost(m[2])
       rec.costUsd += cost
       spendUsd += cost
+    } else if ((m = UNPARSEABLE_RE.exec(msg))) {
+      const cost = parseCost(m[2])
+      touch(m[1], at).costUsd += cost
+      spendUsd += cost
+      errors++
     } else if ((m = DELIVERED_RE.exec(msg))) {
       upgrade(touch(m[1], at), 'delivered')
     } else if ((m = INJECTED_RE.exec(msg))) {

@@ -40,7 +40,19 @@ export interface ClaudeProcess {
   procStart: string | null // FILETIME digits; null = absent or malformed
   interactive: boolean // kind 'interactive' and entrypoint 'cli' (not a headless `claude -p`)
   status: OutsideSession['status']
+  // Set only while status is 'waiting': what it waits on, in Claude Code's
+  // words ("approve Bash: npm test", "input needed", "dialog open").
+  waitingFor: string | null
   updatedAtIso: string | null
+}
+
+export function pidAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (err) {
+    return (err as NodeJS.ErrnoException).code === 'EPERM'
+  }
 }
 
 const RECORD_FILE = /^(\d+)\.json$/
@@ -59,7 +71,10 @@ export function parseClaudeRecord(text: string, fileName: string): ClaudeProcess
   const { pid, sessionId, cwd } = raw
   if (!Number.isSafeInteger(pid) || (pid as number) <= 0 || String(pid) !== filePid) return null
   if (!isUuid(sessionId) || typeof cwd !== 'string' || cwd.length === 0) return null
-  const status = raw.status === 'idle' || raw.status === 'busy' || raw.status === 'shell' ? raw.status : 'unknown'
+  // 'waiting' (Claude Code 2.1.316, measured 2026-11-02): a dialog blocks the
+  // turn (a permission prompt, AskUserQuestion), named by waitingFor.
+  const status =
+    raw.status === 'idle' || raw.status === 'busy' || raw.status === 'shell' || raw.status === 'waiting' ? raw.status : 'unknown'
   const updatedAt = typeof raw.updatedAt === 'number' && Number.isFinite(raw.updatedAt) ? new Date(raw.updatedAt) : null
   return {
     pid: pid as number,
@@ -69,6 +84,7 @@ export function parseClaudeRecord(text: string, fileName: string): ClaudeProcess
     procStart: typeof raw.procStart === 'string' && /^\d{1,20}$/.test(raw.procStart) ? raw.procStart : null,
     interactive: raw.kind === 'interactive' && raw.entrypoint === 'cli',
     status,
+    waitingFor: status === 'waiting' && typeof raw.waitingFor === 'string' && raw.waitingFor ? raw.waitingFor : null,
     updatedAtIso: updatedAt && !Number.isNaN(updatedAt.getTime()) ? updatedAt.toISOString() : null,
   }
 }
@@ -186,6 +202,7 @@ export function decideTakeOver(input: {
   if (!closeOld) return { close: false, note: `You chose to leave it running; ${FORK}` }
   if (status === 'busy') return { close: false, note: `It was busy, so it's still running; ${FORK}` }
   if (status === 'shell') return { close: false, note: `It was running a shell command, so it's still running; ${FORK}` }
+  if (status === 'waiting') return { close: false, note: `It was waiting on a prompt mid-turn, so it's still running; ${FORK}` }
   if (status !== 'idle') return { close: false, note: `Its state couldn't be read, so it was left running; ${FORK}` }
   if (!facts) return { close: false, note: `Couldn't inspect the process (${input.factsError ?? 'not found'}), so it was left running; ${FORK}` }
   if (facts.name.toLowerCase() !== 'claude.exe') return { close: false, note: `Process ${facts.pid} is ${facts.name}, not claude.exe, so it was left alone; ${FORK}` }

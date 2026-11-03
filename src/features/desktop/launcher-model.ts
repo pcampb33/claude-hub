@@ -55,6 +55,7 @@ export const OUTSIDE_STATUS: Record<OutsideSession['status'], string> = {
   // Claude Code keeps 'shell' while a background process it started runs,
   // turn over or not, so this can't claim it's working.
   shell: 'Background process',
+  waiting: 'Needs you',
   unknown: 'Status unknown',
 }
 
